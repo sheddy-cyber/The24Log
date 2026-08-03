@@ -1,0 +1,12 @@
+{
+  "name": "The 24 Log",
+  "short_name": "24 Log",
+  "description": "A personal 24-hour time ledger.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#111c31",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
