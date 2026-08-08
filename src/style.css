@@ -566,6 +566,7 @@ h2 {
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  align-items: start;
   gap: 13px;
   margin: 23px 0 39px;
 }
@@ -2480,6 +2481,7 @@ h2 {
     display: block;
   }
   .summary-grid {
+    align-items: start;
     gap: 9px;
     margin: 12px 0 20px;
   }
