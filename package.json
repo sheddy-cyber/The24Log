@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "python -m http.server 4173 --directory .",
-    "build": "node --check src/main.js",
+    "build": "node build.js",
     "start": "python -m http.server 4173 --directory ."
   }
 }
