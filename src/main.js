@@ -459,7 +459,7 @@ function todayPage() {
 
 function metricCard(label, value, caption, type) {
   const symbol = { clock: "◷", score: "✦", unplanned: "↯", focus: "◎" }[type];
-  return `<article class="metric-card metric-${type}"><span class="metric-symbol">${symbol}</span><div><p>${label}</p><strong>${value}</strong><small>${caption}</small></div></article>`;
+  return `<article class="metric-card metric-${type}"><div class="metric-card-top"><span class="metric-symbol">${symbol}</span><p>${label}</p></div><strong>${value}</strong><small>${caption}</small></article>`;
 }
 
 function getTopCategory(dates) {
