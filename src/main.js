@@ -55,7 +55,7 @@ const defaultState = {
     },
   ],
   reflections: {},
-  settings: { reminder: false, reminderMinutes: 60, weekStartsMonday: true },
+  settings: { reminder: false, reminderMinutes: 60, weekStartsMonday: true, darkMode: false },
 };
 
 let state = loadState();
@@ -63,8 +63,32 @@ let activePage = "today";
 let selectedDate = localDateString(new Date());
 let editHour = null;
 let activeModal = null;
+let reminderTimer = null;
+let deferredInstallPrompt = null;
+const pageScrollPositions = {
+  today: 0,
+  history: 0,
+  insights: 0,
+  goals: 0,
+  settings: 0,
+};
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  render();
+});
+
+function navigateToPage(targetPage, options = {}) {
+  pageScrollPositions[activePage] = window.scrollY;
+  activePage = targetPage;
+  activeModal = null;
+  render();
+  const targetScroll = options.resetScroll ? 0 : (pageScrollPositions[targetPage] || 0);
+  window.scrollTo({ top: targetScroll, behavior: "instant" });
+}
+
 let toastTimer;
-let reminderTimer;
 
 const app = document.querySelector("#app");
 
@@ -174,6 +198,18 @@ function weekDates(anchor = selectedDate) {
   );
 }
 
+function formatWeekRange(startStr, endStr) {
+  const d1 = parseDate(startStr);
+  const d2 = parseDate(endStr);
+  const m1 = d1.toLocaleDateString("en-US", { month: "short" });
+  const m2 = d2.toLocaleDateString("en-US", { month: "short" });
+  const year = d2.getFullYear();
+  if (m1 === m2) {
+    return `${m1} ${d1.getDate()}–${d2.getDate()}, ${year}`;
+  }
+  return `${m1} ${d1.getDate()} – ${m2} ${d2.getDate()}, ${year}`;
+}
+
 function getStreak() {
   let date = localDateString(new Date());
   let streak = 0;
@@ -217,6 +253,7 @@ function icon(name) {
 }
 
 function render() {
+  document.documentElement.dataset.theme = state.settings.darkMode ? 'dark' : 'light';
   app.innerHTML = `
     <div class="app-shell">
       ${sidebar()}
@@ -259,19 +296,36 @@ function getNotifications() {
   const nowHour = new Date().getHours();
   const todayEntries = getDayEntries(todayStr);
 
+  if (nowHour >= 1) {
+    const endedHour = nowHour - 1;
+    const startStr = formatHour(endedHour);
+    const endStr = formatHour(nowHour);
+    if (!todayEntries[endedHour] && nowHour >= 6 && nowHour <= 23) {
+      list.push({
+        id: `hour-ended-${todayStr}-${endedHour}`,
+        type: "reminder",
+        iconType: "reminder",
+        title: `Log your ${startStr}–${endStr} hour`,
+        text: `The ${startStr} to ${endStr} block just ended. Name how you spent this hour.`,
+        action: "open-quick-log",
+        actionText: "Log this hour",
+      });
+    }
+  }
+
   let unloggedCount = 0;
-  for (let h = 8; h <= nowHour; h++) {
+  for (let h = 8; h < nowHour; h++) {
     if (!todayEntries[h]) unloggedCount++;
   }
-  if (unloggedCount > 0) {
+  if (unloggedCount > 1) {
     list.push({
       id: `unlogged-${todayStr}-${nowHour}`,
       type: "reminder",
       iconType: "reminder",
       title: "Unlogged Daytime Hours",
-      text: `You have ${unloggedCount} unlogged hour${unloggedCount > 1 ? "s" : ""} today between 08:00 and now.`,
+      text: `You have ${unloggedCount} unlogged hours today between 08:00 and now.`,
       action: "open-quick-log",
-      actionText: "Log an hour",
+      actionText: "Log hours",
     });
   }
 
@@ -298,6 +352,20 @@ function getNotifications() {
       text: "Great momentum! Log 18+ hours today to keep your streak burning.",
       action: "jump-today",
       actionText: "View today",
+    });
+  }
+
+  const yesterdayStr = shiftDate(todayStr, -1);
+  const prevReflection = state.reflections[yesterdayStr];
+  if (prevReflection) {
+    list.push({
+      id: `promise-${yesterdayStr}`,
+      type: "info",
+      iconType: "info",
+      title: "Yesterday's Focus Reminder",
+      text: `You wrote: "${prevReflection}"`,
+      action: "jump-today",
+      actionText: "View today's ledger",
     });
   }
 
@@ -378,6 +446,7 @@ function todayPage() {
         ${metricCard("Unplanned", `${hoursByCategory([selectedDate])["unplanned"] || 0}h`, goalTextFor("unplanned", "day"), "unplanned")}
         ${metricCard("Top focus", getTopCategory([selectedDate]), "Your most logged category", "focus")}
       </section>
+      ${yesterdayIntentionCard()}
       <section class="ledger-section">
         <div class="section-heading"><div><h2>Your 24 hours</h2><p>Keep it honest. A complete day tells the clearest story.</p></div><button class="text-button" data-action="fill-rest">Mark empty sleep hours</button></div>
         <div class="timeline">${rangeOfHours(0, 24)
@@ -436,9 +505,37 @@ function hourRow(hour) {
   </article>`;
 }
 
+function yesterdayIntentionCard() {
+  const prevDate = shiftDate(selectedDate, -1);
+  const prevReflection = state.reflections[prevDate];
+  if (!prevReflection) return "";
+
+  return `<article class="card yesterday-promise-card">
+    <div class="promise-header">
+      <span class="promise-badge">✦ YESTERDAY'S INTENTION</span>
+      <small>Written on ${dateLabel(prevDate, { month: "short", day: "numeric" })}</small>
+    </div>
+    <p class="promise-quote">“${escapeHtml(prevReflection)}”</p>
+  </article>`;
+}
+
 function reflectionCard() {
   const reflection = state.reflections[selectedDate] || "";
-  return `<section class="reflection-card" id="reflection-section"><div class="reflection-icon">${icon("spark")}</div><div><p class="eyebrow">DAILY REFLECTION</p><h2>What would make tomorrow feel better?</h2><p>Turn the ledger into a small, useful promise to yourself.</p></div><textarea data-reflection="${selectedDate}" maxlength="300" placeholder="One thing I noticed today...">${escapeHtml(reflection)}</textarea><span class="saved-indicator">${reflection ? "Saved" : "Private to you"}</span></section>`;
+  return `<section class="reflection-card" id="reflection-section">
+    <div class="reflection-icon">${icon("spark")}</div>
+    <div>
+      <p class="eyebrow">DAILY REFLECTION</p>
+      <h2>What would make tomorrow feel better?</h2>
+      <p>Turn today's lessons into tomorrow's reminder. Your notes will appear at the top of tomorrow's ledger.</p>
+    </div>
+    <div class="reflection-right">
+      <textarea data-reflection="${selectedDate}" maxlength="300" placeholder="One small promise or focus for tomorrow...">${escapeHtml(reflection)}</textarea>
+      <div class="reflection-footer">
+        <button class="button primary small" data-action="save-reflection" data-date="${selectedDate}">Save intention</button>
+        <span class="saved-indicator">${reflection ? "✓ Saved — will remind you tomorrow" : "Private to you"}</span>
+      </div>
+    </div>
+  </section>`;
 }
 
 function historyPage() {
@@ -513,6 +610,10 @@ function recentDayRow(date) {
 
 function insightsPage() {
   const week = weekDates();
+  const startDate = week[0];
+  const endDate = week[6];
+  const weekLabel = formatWeekRange(startDate, endDate);
+  const weekSwitcher = `<div class="date-switcher"><button class="icon-button" data-action="shift-date" data-shift="-7" aria-label="Previous week">‹</button><span class="date-current"><strong>${weekLabel}</strong></span><button class="icon-button" data-action="shift-date" data-shift="7" aria-label="Next week">›</button></div>`;
   const totals = hoursByCategory(week);
   const totalLogged = Object.values(totals).reduce(
     (sum, amount) => sum + amount,
@@ -527,10 +628,10 @@ function insightsPage() {
     .filter((item) => item.score !== null)
     .reduce((sum, item, _, all) => sum + item.score / all.length, 0);
   return `<div class="page-wrap">
-    ${pageHeading("MAKE THE PATTERNS USEFUL", "Your insights", "A calm look at how your time has actually been spent.")}
-    <section class="insight-topline"><article class="score-hero card"><div><p class="eyebrow">THIS WEEK</p><h2>${totalLogged}<span>h logged</span></h2><p>${totalLogged ? `${Math.round((totalLogged / 168) * 100)}% of your week accounted for` : "Begin logging to uncover your patterns."}</p></div><div class="score-badge" style="--score:${Number.isNaN(averageScore) ? 0 : Math.max(0, Math.min(100, Math.round(averageScore)))}%"><b>${Number.isNaN(averageScore) ? "—" : Math.round(averageScore)}</b><span>avg score</span></div></article>${goalProgressCards()}</section>
+    ${pageHeading("MAKE THE PATTERNS USEFUL", "Your insights", "A calm look at how your time has actually been spent.", weekSwitcher)}
+    <section class="insight-topline"><article class="score-hero card"><div><p class="eyebrow">${weekDates(localDateString(new Date()))[0] === startDate ? "THIS WEEK" : "SELECTED WEEK"}</p><h2>${totalLogged}<span>h logged</span></h2><p>${totalLogged ? `${Math.round((totalLogged / 168) * 100)}% of your week accounted for` : "Begin logging to uncover your patterns."}</p></div><div class="score-badge" style="--score:${Number.isNaN(averageScore) ? 0 : Math.max(0, Math.min(100, Math.round(averageScore)))}%"><b>${Number.isNaN(averageScore) ? "—" : Math.round(averageScore)}</b><span>avg score</span></div></article>${goalProgressCards()}</section>
     <section class="insights-grid">
-      <article class="card bar-chart-card"><div class="section-heading"><div><p class="eyebrow">WEEK AT A GLANCE</p><h2>Productivity rhythm</h2></div><span class="chart-legend"><i></i>Daily score</span></div><div class="bar-chart">${scores.map((item) => scoreBar(item)).join("")}</div><div class="chart-axis"><span>0</span><span>50</span><span>100</span></div></article>
+      <article class="card bar-chart-card"><div class="section-heading"><div><p class="eyebrow">WEEK AT A GLANCE</p><h2>Productivity rhythm</h2></div><span class="chart-legend"><i></i>Daily score</span></div><div class="bar-chart-scroll-wrap"><div class="bar-chart">${scores.map((item) => scoreBar(item)).join("")}</div></div><div class="chart-axis"><span>0</span><span>50</span><span>100</span></div></article>
       <article class="card category-card"><div class="section-heading"><div><p class="eyebrow">TIME ALLOCATION</p><h2>Where your hours went</h2></div></div><div class="category-list">${categoryBreakdown(totals, totalLogged)}</div></article>
       <article class="card heatmap-card"><div class="section-heading"><div><p class="eyebrow">HOUR BY HOUR</p><h2>Your weekly rhythm</h2></div><span class="small-note">More productive →</span></div>${heatmap(week)}</article>
       <article class="card insight-note"><div class="note-icon">${icon("spark")}</div><div><p class="eyebrow">A GENTLE NUDGE</p><h2>${insightHeadline(week)}</h2><p>${insightCopy(week)}</p></div><button class="text-button" data-page="today">Log an hour ${icon("chevron")}</button></article>
@@ -817,9 +918,11 @@ function settingsPage() {
     <section class="settings-layout">
       <article class="card settings-card"><div class="section-heading"><div><p class="eyebrow">CATEGORIES</p><h2>Your time labels</h2><p>Each category has a colour and an impact on your score.</p></div><button class="button small" data-action="open-category-modal">${icon("plus")} Add category</button></div><div class="category-guideline"><span class="guideline-icon">⚙︎</span><div><strong>Customize to your preferences</strong><p>Hit <b>⋯</b> on any label to rename it, repaint it, or rewire how it scores your day. Don't like "Work"? Call it "The Grind." Add a new one for anything that doesn't fit a box.</p></div></div><div class="category-settings">${state.categories.map(categorySetting).join("")}</div></article>
       <aside class="settings-side">
-        <article class="card reminder-card"><div class="setting-icon">♢</div><div><p class="eyebrow">GENTLE REMINDERS</p><h2>Remember to log</h2><p>A browser notification can nudge you while this app is open.</p></div><label class="switch"><input type="checkbox" data-setting="reminder" ${state.settings.reminder ? "checked" : ""}/><span></span></label><div class="reminder-frequency"><label>Every <select data-setting="reminderMinutes"><option value="60" ${state.settings.reminderMinutes === 60 ? "selected" : ""}>hour</option><option value="120" ${state.settings.reminderMinutes === 120 ? "selected" : ""}>2 hours</option><option value="180" ${state.settings.reminderMinutes === 180 ? "selected" : ""}>3 hours</option></select></label></div></article>
+        <article class="card pwa-card"><div class="setting-icon pwa-icon">📲</div><div><p class="eyebrow">OFFLINE APP</p><h2>Install 24 Log</h2><p>Install to your phone or desktop for quick access and full offline logging.</p></div><button class="button secondary small" data-action="install-pwa">${deferredInstallPrompt ? "Install App" : "Install Info"}</button></article>
+        <article class="card reminder-card"><div class="setting-icon">♢</div><div><p class="eyebrow">GENTLE REMINDERS</p><h2>Remember to log</h2><p>Notifications arrive at the end of each hour block (e.g. 7:00 to log 6:00–7:00).</p></div><label class="switch"><input type="checkbox" data-setting="reminder" ${state.settings.reminder ? "checked" : ""}/><span></span></label><div class="reminder-frequency"><label>Remind at end of <select data-setting="reminderMinutes"><option value="60" ${state.settings.reminderMinutes === 60 ? "selected" : ""}>every hour</option><option value="120" ${state.settings.reminderMinutes === 120 ? "selected" : ""}>every 2 hours</option><option value="180" ${state.settings.reminderMinutes === 180 ? "selected" : ""}>every 3 hours</option></select></label></div></article>
         <article class="card data-card"><div class="setting-icon">↥</div><div><p class="eyebrow">YOUR DATA</p><h2>Keep a copy</h2><p>Export your complete ledger any time. It’s all yours.</p></div><div class="data-actions"><button class="button secondary" data-action="export-data">${icon("download")} Export JSON</button><label class="button secondary import-button">Import backup<input type="file" accept="application/json" data-action="import-data" /></label></div></article>
         <article class="card preference-card"><p class="eyebrow">PREFERENCES</p><label class="check-option"><input type="checkbox" data-setting="weekStartsMonday" ${state.settings.weekStartsMonday ? "checked" : ""}/> Start calendar weeks on Monday</label><p class="preference-note">${state.settings.weekStartsMonday ? "Your calendar and weekly views begin on Monday." : "Disabled — your week currently starts on Sunday."}</p></article>
+        <article class="card appearance-card"><div class="setting-icon dark-icon">☾</div><div><p class="eyebrow">APPEARANCE</p><h2>Dark mode</h2><p>Easy on the eyes for late-night logging.</p></div><label class="switch"><input type="checkbox" data-setting="darkMode" ${state.settings.darkMode ? "checked" : ""}/><span></span></label></article>
         <button class="danger-link" data-action="clear-data">Clear all local data</button>
       </aside>
     </section>
@@ -848,7 +951,13 @@ function modalShell(title, content) {
 function quickLogModal() {
   const now = new Date();
   const defaultDate = selectedDate;
-  const defaultHour = isToday(defaultDate) ? now.getHours() : 9;
+  const justConcludedHour = (now.getHours() - 1 + 24) % 24;
+  const defaultHour =
+    activeModal?.hour !== undefined && activeModal?.hour !== null
+      ? Number(activeModal.hour)
+      : isToday(defaultDate)
+        ? justConcludedHour
+        : 9;
   const existing = entryFor(defaultDate, defaultHour);
   return modalShell(
     "Quickly log an hour",
@@ -934,7 +1043,7 @@ function notificationsModal() {
               <h4>${escapeHtml(item.title)}</h4>
               <p>${escapeHtml(item.text)}</p>
             </div>
-            ${item.action ? `<button class="button small ${isUnread ? "primary" : "secondary"} notification-action-btn" data-action="${item.action}" data-dismiss-id="${item.id}">${item.actionText}</button>` : ""}
+            ${item.action ? `<button class="button small ${isUnread ? "primary" : "secondary"} notification-action-btn" data-action="${item.action}" ${item.hour !== undefined ? `data-hour="${item.hour}"` : ""} data-dismiss-id="${item.id}">${item.actionText}</button>` : ""}
           </div>
         `;
         })
@@ -1009,8 +1118,8 @@ function escapeHtml(value) {
   );
 }
 
-function openModal(type, id = null) {
-  activeModal = id ? { type, id } : type;
+function openModal(type, id = null, hour = null) {
+  activeModal = { type, id, hour };
   render();
 }
 function modalType() {
@@ -1055,18 +1164,45 @@ function removeCategory(id) {
   saveState();
 }
 
+function msUntilNextTopOfHour() {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+  return next.getTime() - now.getTime();
+}
+
+function onHourEndCheck() {
+  const now = new Date();
+  const todayStr = localDateString(now);
+  const nowHour = now.getHours();
+  const endedHour = (nowHour - 1 + 24) % 24;
+  const endedDateStr = nowHour === 0 ? shiftDate(todayStr, -1) : todayStr;
+
+  const entriesForDate = state.entries[endedDateStr] || {};
+  const isLogged = !!entriesForDate[endedHour];
+
+  if (!isLogged && document.hidden && Notification.permission === "granted") {
+    const startStr = formatHour(endedHour);
+    const endStr = formatHour(nowHour);
+    new Notification("The 24 Log", {
+      body: `It’s ${endStr} — log what you did between ${startStr} and ${endStr}.`,
+    });
+  }
+}
+
 function startReminder() {
+  clearTimeout(reminderTimer);
   clearInterval(reminderTimer);
   if (!state.settings.reminder) return;
-  reminderTimer = setInterval(
-    () => {
-      if (document.hidden && Notification.permission === "granted")
-        new Notification("The 24 Log", {
-          body: "Take a moment to name your last hour.",
-        });
-    },
-    Number(state.settings.reminderMinutes) * 60 * 1000,
-  );
+
+  function scheduleNextCheck() {
+    const delay = msUntilNextTopOfHour();
+    reminderTimer = setTimeout(() => {
+      onHourEndCheck();
+      scheduleNextCheck();
+    }, delay);
+  }
+
+  scheduleNextCheck();
 }
 
 function exportData() {
@@ -1087,9 +1223,7 @@ app.addEventListener("click", async (event) => {
   if (!target) return;
   const { action, page } = target.dataset;
   if (page) {
-    activePage = page;
-    activeModal = null;
-    render();
+    navigateToPage(page);
     return;
   }
   if (action === "toggle-sidebar") {
@@ -1104,11 +1238,41 @@ app.addEventListener("click", async (event) => {
     }
   }
   if (action === "open-notifications") return openModal("notifications");
+  if (action === "install-pwa") {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === "accepted") {
+          showToast("✓ Thank you for installing The 24 Log!");
+        }
+        deferredInstallPrompt = null;
+        render();
+      });
+    } else {
+      showToast("To install: Tap 'Share' → 'Add to Home Screen' in Safari on iOS, or 'Install' in Chrome/Edge.");
+    }
+    return;
+  }
+  if (action === "save-reflection") {
+    const date = target.dataset.date || selectedDate;
+    const textarea = document.querySelector(`textarea[data-reflection="${date}"]`);
+    if (textarea) {
+      const value = textarea.value.trim();
+      if (value) {
+        state.reflections[date] = value;
+      } else {
+        delete state.reflections[date];
+      }
+      saveState();
+      showToast("✓ Intention saved — will remind you tomorrow!");
+      render();
+    }
+    return;
+  }
   if (action === "scroll-to-reflection") {
     closeModal();
-    activePage = "today";
     selectedDate = localDateString(new Date());
-    render();
+    navigateToPage("today", { resetScroll: true });
     setTimeout(() => {
       const section = document.querySelector("#reflection-section");
       if (section) {
@@ -1127,7 +1291,10 @@ app.addEventListener("click", async (event) => {
     showToast("All notifications marked as read.");
     return;
   }
-  if (action === "open-quick-log") return openModal("quick-log");
+  if (action === "open-quick-log") {
+    const hour = target.dataset.hour !== undefined ? Number(target.dataset.hour) : null;
+    return openModal("quick-log", null, hour);
+  }
   if (action === "close-modal") return closeModal();
   if (action === "close-modal-backdrop") {
     if (event.target === target) return closeModal();
@@ -1146,15 +1313,13 @@ app.addEventListener("click", async (event) => {
   if (action === "jump-today") {
     closeModal();
     selectedDate = localDateString(new Date());
-    activePage = "today";
     editHour = null;
-    render();
+    navigateToPage("today", { resetScroll: true });
     return;
   }
   if (action === "open-settings") {
     closeModal();
-    activePage = "settings";
-    render();
+    navigateToPage("settings");
     return;
   }
   if (action === "shift-month") {
@@ -1166,9 +1331,8 @@ app.addEventListener("click", async (event) => {
   }
   if (action === "select-date") {
     selectedDate = target.dataset.date;
-    activePage = "today";
     editHour = null;
-    render();
+    navigateToPage("today", { resetScroll: true });
     return;
   }
   if (action === "edit-hour") {
