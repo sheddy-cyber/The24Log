@@ -79,10 +79,36 @@ window.addEventListener("beforeinstallprompt", (event) => {
   render();
 });
 
+const VALID_PAGES = ["today", "history", "insights", "goals", "settings"];
+
+function getPageFromHash() {
+  const hash = window.location.hash.replace(/^#/, "");
+  return VALID_PAGES.includes(hash) ? hash : "today";
+}
+
+function initNavigation() {
+  const initialPage = getPageFromHash();
+  activePage = initialPage;
+  history.replaceState({ page: initialPage }, "", `#${initialPage}`);
+}
+
 function navigateToPage(targetPage, options = {}) {
+  if (!VALID_PAGES.includes(targetPage)) targetPage = "today";
+  if (activePage === targetPage && !activeModal && !options.force) return;
+
   pageScrollPositions[activePage] = window.scrollY;
   activePage = targetPage;
   activeModal = null;
+
+  const targetHash = `#${targetPage}`;
+  if (window.location.hash !== targetHash && !options.skipHistory) {
+    if (options.replace) {
+      history.replaceState({ page: targetPage }, "", targetHash);
+    } else {
+      history.pushState({ page: targetPage }, "", targetHash);
+    }
+  }
+
   render();
   const targetScroll = options.resetScroll ? 0 : (pageScrollPositions[targetPage] || 0);
   window.scrollTo({ top: targetScroll, behavior: "instant" });
@@ -1119,6 +1145,9 @@ function escapeHtml(value) {
 }
 
 function openModal(type, id = null, hour = null) {
+  if (!activeModal) {
+    history.pushState({ page: activePage, modal: true }, "", window.location.hash);
+  }
   activeModal = { type, id, hour };
   render();
 }
@@ -1126,8 +1155,12 @@ function modalType() {
   return typeof activeModal === "object" ? activeModal.type : activeModal;
 }
 function closeModal() {
+  const hadModal = Boolean(activeModal);
   activeModal = null;
   render();
+  if (hadModal && history.state?.modal) {
+    history.back();
+  }
 }
 
 function showToast(message) {
@@ -1396,8 +1429,7 @@ app.addEventListener("submit", (event) => {
     saveEntry(data.date, Number(data.hour), data);
     selectedDate = data.date;
     activeModal = null;
-    activePage = "today";
-    render();
+    navigateToPage("today", { resetScroll: true });
     showToast("Hour saved to your ledger.");
   }
   if (form.dataset.form === "date-picker") {
@@ -1503,5 +1535,18 @@ app.addEventListener("change", async (event) => {
   }
 });
 
+window.addEventListener("popstate", () => {
+  if (activeModal) {
+    activeModal = null;
+    render();
+    return;
+  }
+  const targetPage = getPageFromHash();
+  if (activePage !== targetPage) {
+    navigateToPage(targetPage, { skipHistory: true });
+  }
+});
+
+initNavigation();
 startReminder();
 render();
