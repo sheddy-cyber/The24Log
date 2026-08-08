@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-24-log-v5';
+const CACHE_NAME = 'the-24-log-v6';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

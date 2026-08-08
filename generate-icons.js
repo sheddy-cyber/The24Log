@@ -143,6 +143,8 @@ function draw24CircleIcon(x, y, w, h) {
 
 const icon192 = createPNG(192, 192, draw24CircleIcon);
 fs.writeFileSync('./icon-192.png', icon192);
+fs.writeFileSync('./apple-touch-icon.png', icon192);
+fs.writeFileSync('./favicon.ico', icon192);
 
 const icon512 = createPNG(512, 512, draw24CircleIcon);
 fs.writeFileSync('./icon-512.png', icon512);
