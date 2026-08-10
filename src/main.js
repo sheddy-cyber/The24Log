@@ -524,7 +524,7 @@ function hourRow(hour) {
       <div class="hour-label"><strong>${label}</strong><small>${formatHour((hour + 1) % 24)}</small></div>
       <form class="entry-form" data-form="entry" data-hour="${hour}">
         <label class="category-select"><select name="categoryId" aria-label="Category"><option value="">Choose a category</option>${state.categories.map((category) => `<option value="${category.id}" ${entry?.categoryId === category.id ? "selected" : ""}>${category.icon} ${category.name}</option>`).join("")}</select></label>
-        <input name="title" maxlength="70" placeholder="What did you do?" value="${escapeHtml(entry?.title || "")}" aria-label="What did you do?" required />
+        <input name="title" maxlength="140" placeholder="What did you do?" value="${escapeHtml(entry?.title || "")}" aria-label="What did you do?" required />
         <input name="project" maxlength="35" placeholder="Project (optional)" value="${escapeHtml(entry?.project || "")}" aria-label="Project tag" />
         <button class="save-entry" type="submit">Save</button>
       </form>
@@ -1004,7 +1004,7 @@ function quickLogModal() {
       )
       .join(
         "",
-      )}</select></label><label>Category<select name="categoryId" required><option value="">Choose a category</option>${state.categories.map((category) => `<option value="${category.id}" ${existing?.categoryId === category.id ? "selected" : ""}>${category.icon} ${category.name}</option>`).join("")}</select></label><label>What did you do?<input autofocus name="title" value="${escapeHtml(existing?.title || "")}" placeholder="e.g. Wrote project proposal" maxlength="70" required /></label><label>Project / tag <span>optional</span><input name="project" value="${escapeHtml(existing?.project || "")}" placeholder="e.g. Portfolio" maxlength="35" /></label><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancel</button><button type="submit" class="button primary">Save hour</button></div></form>`,
+      )}</select></label><label>Category<select name="categoryId" required><option value="">Choose a category</option>${state.categories.map((category) => `<option value="${category.id}" ${existing?.categoryId === category.id ? "selected" : ""}>${category.icon} ${category.name}</option>`).join("")}</select></label><label>What did you do?<input autofocus name="title" value="${escapeHtml(existing?.title || "")}" placeholder="e.g. Wrote project proposal" maxlength="140" required /></label><label>Project / tag <span>optional</span><input name="project" value="${escapeHtml(existing?.project || "")}" placeholder="e.g. Portfolio" maxlength="35" /></label><div class="modal-actions"><button type="button" class="button secondary" data-action="close-modal">Cancel</button><button type="submit" class="button primary">Save hour</button></div></form>`,
   );
 }
 
@@ -1259,10 +1259,20 @@ function exportData() {
 }
 
 app.addEventListener("click", async (event) => {
+  const sidebar = document.querySelector("#sidebar");
+  if (sidebar && sidebar.classList.contains("open")) {
+    const isInsideSidebar = event.target.closest("#sidebar");
+    const isToggle = event.target.closest('[data-action="toggle-sidebar"]');
+    if (!isInsideSidebar && !isToggle) {
+      sidebar.classList.remove("open");
+    }
+  }
+
   const target = event.target.closest("[data-action], [data-page]");
   if (!target) return;
   const { action, page } = target.dataset;
   if (page) {
+    if (sidebar) sidebar.classList.remove("open");
     navigateToPage(page);
     return;
   }
