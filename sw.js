@@ -1,13 +1,9 @@
-const CACHE_NAME = 'the-24-log-v6';
+const CACHE_NAME = 'the-24-log-v7';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/icon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png',
-  '/favicon.ico'
+  '/public/icon.svg'
 ];
 
 // Install Event: Pre-cache essential app shell assets
