@@ -7,5 +7,8 @@
     "dev": "python -m http.server 4173 --directory .",
     "build": "node build.js",
     "start": "python -m http.server 4173 --directory ."
+  },
+  "dependencies": {
+    "sharp": "^0.35.3"
   }
 }
