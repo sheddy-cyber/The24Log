@@ -305,8 +305,15 @@ function sidebar() {
     ["goals", "Goals"],
     ["settings", "Settings"],
   ];
+  if (activePage === "welcome") {
+    return `<div class="content welcome-content">
+    <div class="brand"><img src="/icon-192.png?v=461" class="brand-logo-img" alt="24 Log Logo" /><span>THE <strong>24</strong> LOG</span></div>
+    <button class="quick-log" data-action="open-quick-log">${icon("plus")} Quick log</button>
+    <nav>${nav.map(([page, label]) => `<button class="nav-link ${activePage === page ? "active" : ""}" data-page="${page}">${icon(page)}<span>${label}</span></button>`).join("")}</nav>
+  </div>`;
+  }
   return `<aside class="sidebar" id="sidebar">
-    <div class="brand"><img src="/icon-192.png?v=460" class="brand-logo-img" alt="24 Log Logo" /><span>THE <strong>24</strong> LOG</span></div>
+    <div class="brand"><img src="/icon-192.png?v=461" class="brand-logo-img" alt="24 Log Logo" /><span>THE <strong>24</strong> LOG</span></div>
     <button class="quick-log" data-action="open-quick-log">${icon("plus")} Quick log</button>
     <nav>${nav.map(([page, label]) => `<button class="nav-link ${activePage === page ? "active" : ""}" data-page="${page}">${icon(page)}<span>${label}</span></button>`).join("")}</nav>
     <div class="sidebar-bottom">
