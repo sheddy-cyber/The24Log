@@ -519,7 +519,8 @@ function hourRow(hour) {
   const entry = entryFor(selectedDate, hour);
   const current = isToday(selectedDate) && new Date().getHours() === hour;
   const label = formatHour(hour);
-  if (!entry || editHour === hour) {
+  const shouldOpen = editHour === hour || (!entry && current && editHour === null);
+  if (shouldOpen) {
     return `<article class="hour-row ${current ? "current-hour" : ""} ${editHour === hour ? "editing" : ""}">
       <div class="hour-label"><strong>${label}</strong><small>${formatHour((hour + 1) % 24)}</small></div>
       <form class="entry-form" data-form="entry" data-hour="${hour}">
@@ -528,6 +529,12 @@ function hourRow(hour) {
         <input name="project" maxlength="35" placeholder="Project (optional)" value="${escapeHtml(entry?.project || "")}" aria-label="Project tag" />
         <button class="save-entry" type="submit">Save</button>
       </form>
+    </article>`;
+  }
+  if (!entry) {
+    return `<article class="hour-row empty-hour ${current ? "current-hour" : ""}">
+      <div class="hour-label"><strong>${label}</strong><small>${formatHour((hour + 1) % 24)}</small></div>
+      <button class="empty-hour-action" data-action="edit-hour" data-hour="${hour}" aria-label="Log ${label} to ${formatHour((hour + 1) % 24)}"><span class="empty-hour-plus">+</span><span>Log this hour</span></button>
     </article>`;
   }
   const category = categoryFor(entry.categoryId);
