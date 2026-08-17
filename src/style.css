@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Manrope:wght@500;600;700;800&display=swap");
-
 :root {
   color: #18243a;
   background: #f5f6fa;
@@ -3263,7 +3261,7 @@ h1,
    2026 interface refresh — a calmer, more focused daily logging surface
    ====================================================================== */
 :root {
-  --font-display: "Manrope", "DM Sans", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
   --ink: #17213a;
   --muted: #6c7890;
   --line: #e3e8f1;
@@ -3409,3 +3407,82 @@ h2, h3 { font-family: var(--font-display); }
   .entry-form { padding: 10px; }
   .reflection-card { border-radius: 15px; }
 }
+
+/* Classic desktop UI: flat, familiar, and intentionally free of motion. */
+:root { --font-display: "Segoe UI", Arial, sans-serif; --ink: #1f1f1f; --muted: #616161; --line: #d1d1d1; --surface: #fff; }
+*, *::before, *::after { animation: none !important; transition: none !important; }
+body { background: #f3f3f3; color: #1f1f1f; }
+.sidebar { width: 250px; padding: 20px 12px; background: #17365d; box-shadow: none; }
+.main-content { width: calc(100% - 250px); margin-left: 250px; }
+.brand { padding-left: 8px; font-family: "Segoe UI", Arial, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .04em; }
+.brand-logo-img { width: 28px; height: 28px; }
+.quick-log { height: 40px; width: calc(100% - 8px); margin: 25px 4px 18px; border: 1px solid #b9d6ef; border-radius: 2px; color: #fff; background: #0f6cbd; box-shadow: none; font-size: 14px; }
+.quick-log:hover { transform: none; box-shadow: none; background: #0f6cbd; }
+.sidebar nav { gap: 1px; }
+.nav-link { height: 42px; border-radius: 2px; color: #d5e3f1; }
+.nav-link:hover { color: #fff; background: #204a7a; transform: none; }
+.nav-link.active { color: #fff; background: #285587; }
+.nav-link.active::before { left: -12px; height: 42px; border-radius: 0; background: #fff; }
+.streak-card { border: 1px solid #4d7098; border-radius: 2px; background: #204671; backdrop-filter: none; }
+.page-wrap { width: min(1180px, calc(100% - 64px)); padding: 46px 0 65px; }
+.page-header { margin-bottom: 26px; }
+h1, h2, h3 { font-family: "Segoe UI", Arial, sans-serif; }
+h1 { font-size: clamp(31px, 3.3vw, 44px); font-weight: 600; letter-spacing: -.025em; line-height: 1.15; }
+.eyebrow { color: #616161; font-family: "Segoe UI", Arial, sans-serif; font-size: 11px; letter-spacing: .08em; }
+.subheading { color: #616161; font-size: 14px; }
+.button { min-height: 36px; border-radius: 2px; }
+.button.primary, .save-entry { background: #0f6cbd; box-shadow: none; }
+.button.primary:not(:disabled):hover { transform: none; box-shadow: none; background: #0f6cbd; }
+.button.secondary { border-color: #8a8a8a; border-radius: 2px; color: #242424; background: #fff; }
+.icon-button { border-radius: 2px; }
+.icon-button:hover { background: #e9e9e9; }
+.day-control { min-height: 84px; padding: 15px 20px; border-color: #c8c8c8; border-radius: 2px; background: #fff; box-shadow: none; }
+.day-control::before, .day-control::after { display: none; }
+.date-switcher { gap: 2px; }
+.date-switcher .icon-button { width: 32px; height: 32px; border: 1px solid #d0d0d0; border-radius: 2px; background: #fff; }
+.date-current { padding: 0 9px; }
+.date-current strong { font-family: "Segoe UI", Arial, sans-serif; font-size: 20px; font-weight: 600; letter-spacing: 0; }
+.day-meter { min-width: 190px; gap: 7px; }
+.day-meter strong { font-family: "Segoe UI", Arial, sans-serif; font-size: 26px; font-weight: 600; letter-spacing: 0; }
+.progress-track { height: 5px; border-radius: 0; background: #e4e4e4; }
+.progress-track i { border-radius: 0; background: #0f6cbd; }
+.summary-grid { gap: 12px; margin: 16px 0 34px; }
+.metric-card { min-height: 105px; padding: 15px; border-color: #d1d1d1; border-radius: 2px; background: #fff; box-shadow: none; }
+.metric-card:hover { transform: none; box-shadow: none; }
+.metric-symbol { width: 30px; height: 30px; border-radius: 2px; }
+.metric-card p { color: #616161; font-size: 11px; }
+.metric-card strong { margin: 6px 0 5px; font-family: "Segoe UI", Arial, sans-serif; font-size: 27px; font-weight: 600; letter-spacing: 0; }
+.metric-card small { color: #757575; }
+.section-heading h2 { font-family: "Segoe UI", Arial, sans-serif; font-size: 23px; font-weight: 600; letter-spacing: -.02em; }
+.section-heading p { color: #616161; }
+.text-button { color: #005a9e; }
+.timeline { border-color: #c8c8c8; border-radius: 2px; background: #fff; box-shadow: none; }
+.hour-row { min-height: 59px; background: #fff; }
+.hour-row:hover { background: #f6f6f6; }
+.hour-row.current-hour { min-height: 72px; background: #edf6fc; }
+.hour-row.current-hour::before { width: 3px; background: #0f6cbd; }
+.hour-label { padding-left: 20px; }
+.entry-form { grid-template-columns: 150px minmax(130px, 1fr) 130px 60px; }
+.entry-form input, .entry-form select { height: 34px; border-color: #a6a6a6; border-radius: 2px; background: #fff; }
+.entry-form input:focus, .entry-form select:focus { border-color: #005a9e; box-shadow: 0 0 0 1px #005a9e; outline: 0; }
+.save-entry { border-radius: 2px; }
+.empty-hour { min-height: 46px; }
+.empty-hour:hover { background: #f6f6f6; }
+.empty-hour-action { min-height: 45px; color: #6b6b6b; }
+.empty-hour-action:hover { color: #005a9e; }
+.empty-hour-plus { border: 1px solid #a6a6a6; border-radius: 2px; color: #616161; }
+.empty-hour-action:hover .empty-hour-plus { border-color: #005a9e; color: #005a9e; background: transparent; }
+.category-chip { border-radius: 2px; }
+.reflection-card { border-color: #b9d6ef; border-radius: 2px; background: #f5faff; box-shadow: none; }
+.reflection-card h2 { font-family: "Segoe UI", Arial, sans-serif; font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.card, .calendar-card, .history-list, .bar-chart-card, .category-card, .heatmap-card, .insight-note { border-color: #d1d1d1; border-radius: 2px; box-shadow: none; }
+[data-theme="dark"] body { background: #202020; }
+[data-theme="dark"] .sidebar { background: #17365d; }
+[data-theme="dark"] .metric-card, [data-theme="dark"] .timeline, [data-theme="dark"] .card, [data-theme="dark"] .hour-row { border-color: #4a4a4a; background: #292929; }
+[data-theme="dark"] .hour-row:hover, [data-theme="dark"] .hour-row.current-hour { background: #303b46; }
+[data-theme="dark"] .day-control { border-color: #4a4a4a; background: #292929; }
+[data-theme="dark"] .date-current strong, [data-theme="dark"] .day-meter strong { color: #fff; }
+[data-theme="dark"] .date-current span, [data-theme="dark"] .day-meter small { color: #c4c4c4; }
+[data-theme="dark"] .date-switcher .icon-button { border-color: #5a5a5a; color: #fff; background: #333; }
+[data-theme="dark"] .entry-form input, [data-theme="dark"] .entry-form select { border-color: #6b6b6b; background: #333; }
+@media (max-width: 760px) { .main-content { width: 100%; margin-left: 0; } .page-wrap { width: min(100% - 30px, 620px); padding-top: 28px; } h1 { font-size: 32px; } .day-control, .metric-card, .reflection-card { border-radius: 2px; } .day-control { min-height: 86px; padding: 14px; } .metric-card { min-height: 96px; } }
