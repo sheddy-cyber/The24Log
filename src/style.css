@@ -3486,3 +3486,62 @@ h1 { font-size: clamp(31px, 3.3vw, 44px); font-weight: 600; letter-spacing: -.02
 [data-theme="dark"] .date-switcher .icon-button { border-color: #5a5a5a; color: #fff; background: #333; }
 [data-theme="dark"] .entry-form input, [data-theme="dark"] .entry-form select { border-color: #6b6b6b; background: #333; }
 @media (max-width: 760px) { .main-content { width: 100%; margin-left: 0; } .page-wrap { width: min(100% - 30px, 620px); padding-top: 28px; } h1 { font-size: 32px; } .day-control, .metric-card, .reflection-card { border-radius: 2px; } .day-control { min-height: 86px; padding: 14px; } .metric-card { min-height: 96px; } }
+
+/* Classic does not need to be pale: restore confident Office-style colour. */
+body { background: #e9eef5; }
+.sidebar { background: linear-gradient(180deg, #1b4c7e 0%, #16365d 100%); }
+.nav-link { color: #d9e8f6; }
+.nav-link:hover { background: #2c6093; }
+.nav-link.active { background: #2c6093; box-shadow: inset 3px 0 0 #8cc8ff; }
+.nav-link.active::before { display: none; }
+.streak-card { border-color: #6489ae; background: #234d7a; }
+.sidebar-bottom > p { color: #b7cee3; }
+
+.page-header { padding-bottom: 18px; border-bottom: 3px solid #0f6cbd; }
+.page-header h1 { color: #12385f; }
+.day-control { border-color: #1c5f9e; background: linear-gradient(135deg, #1b5f9e, #174878); }
+.date-current span, .day-meter small { color: #d6e8f8; }
+.date-current strong, .day-meter strong { color: #fff; }
+.day-meter strong span { color: #b7d8f3; }
+.date-switcher .icon-button { border-color: #78a9d4; color: #fff; background: #276da9; }
+.date-switcher .icon-button:hover { color: #fff; background: #276da9; }
+.progress-track { background: #113d69; }
+.progress-track i { background: #7cc6f2; }
+
+.metric-card { border-color: #c3d3e3; border-top-width: 4px; background: #fff; }
+.metric-card.metric-clock { border-top-color: #3f7cc3; background: #f5f9ff; }
+.metric-card.metric-score { border-top-color: #239a78; background: #f3fbf8; }
+.metric-card.metric-unplanned { border-top-color: #cc5b5d; background: #fff6f6; }
+.metric-card.metric-focus { border-top-color: #bc8b22; background: #fffaf0; }
+.metric-card strong { color: #153f69; }
+.metric-card small { color: #667b92; }
+.metric-symbol { border: 1px solid rgba(31, 80, 125, .12); }
+
+.timeline { border-color: #aebfd0; }
+.hour-row { border-bottom-color: #d6e0ea; }
+.hour-label { background: #edf3f9; border-right-color: #cbd8e5; }
+.hour-label strong { color: #264d73; }
+.hour-label small { color: #6d87a1; }
+.hour-row:hover { background: #f1f7fc; }
+.hour-row.current-hour { background: #dceefa; }
+.empty-hour-action { color: #486b8c; }
+.empty-hour-plus { border-color: #829fba; color: #245b8f; background: #fff; }
+.entry-form input, .entry-form select { border-color: #8fa8c0; }
+.save-entry { background: #0f6cbd; }
+.reflection-card { border-color: #9ec7e9; background: #eaf5fd; }
+.reflection-icon { color: #0f6cbd; background: #d3eafb; }
+.reflection-card p:not(.eyebrow) { color: #4d6e8d; }
+.reflection-card textarea { border-color: #9ec7e9; background: #fff; }
+.card { border-color: #b9cadb; }
+
+[data-theme="dark"] body { background: #1c2734; }
+[data-theme="dark"] .sidebar { background: linear-gradient(180deg, #183f68, #102b4a); }
+[data-theme="dark"] .page-header { border-bottom-color: #5ba9e6; }
+[data-theme="dark"] .page-header h1 { color: #dceeff; }
+[data-theme="dark"] .day-control { border-color: #4175a4; background: linear-gradient(135deg, #1c568c, #173e68); }
+[data-theme="dark"] .metric-card.metric-clock { background: #1b304a; border-top-color: #5c9ee4; }
+[data-theme="dark"] .metric-card.metric-score { background: #19392f; border-top-color: #48b997; }
+[data-theme="dark"] .metric-card.metric-unplanned { background: #3d292d; border-top-color: #e27578; }
+[data-theme="dark"] .metric-card.metric-focus { background: #3c3420; border-top-color: #d4a849; }
+[data-theme="dark"] .hour-label { background: #22354a; border-right-color: #40566f; }
+[data-theme="dark"] .hour-row.current-hour { background: #274766; }
