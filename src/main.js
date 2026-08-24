@@ -140,16 +140,18 @@ function loadState() {
         ...defaultState.settings,
         ...parsed.settings,
         displayFont: [
-          "ibm-plex-sans",
+          "raleway",
           "lobster-two",
-          "averia-serif-libre",
+          "libre-baskerville",
         ].includes(parsed.settings?.displayFont)
           ? parsed.settings.displayFont
           : parsed.settings?.displayFont === "fredoka" ||
-              parsed.settings?.displayFont === "pt-serif"
-            ? "averia-serif-libre"
-            : parsed.settings?.displayFont === "inter"
-              ? "ibm-plex-sans"
+              parsed.settings?.displayFont === "pt-serif" ||
+              parsed.settings?.displayFont === "averia-serif-libre"
+            ? "libre-baskerville"
+            : parsed.settings?.displayFont === "inter" ||
+                parsed.settings?.displayFont === "ibm-plex-sans"
+              ? "raleway"
               : "lobster-two",
       },
     };
@@ -1017,35 +1019,35 @@ function settingsPage() {
           </div>
         </button>
 
-        <button type="button" class="specimen-row ${currentFont === "ibm-plex-sans" ? "active" : ""}" data-action="set-display-font" data-font="ibm-plex-sans">
+        <button type="button" class="specimen-row ${currentFont === "raleway" ? "active" : ""}" data-action="set-display-font" data-font="raleway">
           <div class="specimen-meta">
-            <span class="specimen-radio ${currentFont === "ibm-plex-sans" ? "checked" : ""}"></span>
+            <span class="specimen-radio ${currentFont === "raleway" ? "checked" : ""}"></span>
             <div class="specimen-labels">
-              <strong>IBM Plex Sans</strong>
-              <span class="specimen-tag">Grotesque • Engineering</span>
+              <strong>Raleway</strong>
+              <span class="specimen-tag">Geometric • Elegant</span>
             </div>
           </div>
-          <div class="specimen-phrase font-ibm-plex">
-            "Own your 24 hours with engineered precision."
+          <div class="specimen-phrase font-raleway">
+            "Own your 24 hours with elegant geometric clarity."
           </div>
           <div class="specimen-action">
-            ${currentFont === "ibm-plex-sans" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
+            ${currentFont === "raleway" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
           </div>
         </button>
 
-        <button type="button" class="specimen-row ${currentFont === "averia-serif-libre" ? "active" : ""}" data-action="set-display-font" data-font="averia-serif-libre">
+        <button type="button" class="specimen-row ${currentFont === "libre-baskerville" ? "active" : ""}" data-action="set-display-font" data-font="libre-baskerville">
           <div class="specimen-meta">
-            <span class="specimen-radio ${currentFont === "averia-serif-libre" ? "checked" : ""}"></span>
+            <span class="specimen-radio ${currentFont === "libre-baskerville" ? "checked" : ""}"></span>
             <div class="specimen-labels">
-              <strong>Averia Serif Libre</strong>
-              <span class="specimen-tag">Organic • Vintage Serif</span>
+              <strong>Libre Baskerville</strong>
+              <span class="specimen-tag">Editorial • Classic Serif</span>
             </div>
           </div>
-          <div class="specimen-phrase font-averia">
-            "Own your 24 hours with timeless, organic warmth."
+          <div class="specimen-phrase font-baskerville">
+            "Own your 24 hours with timeless editorial elegance."
           </div>
           <div class="specimen-action">
-            ${currentFont === "averia-serif-libre" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
+            ${currentFont === "libre-baskerville" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
           </div>
         </button>
       </div>
@@ -1501,9 +1503,9 @@ app.addEventListener("click", async (event) => {
       document.documentElement.dataset.font = font;
       render();
       const labels = {
-        "ibm-plex-sans": "IBM Plex Sans",
+        raleway: "Raleway",
         "lobster-two": "Lobster Two",
-        "averia-serif-libre": "Averia Serif Libre",
+        "libre-baskerville": "Libre Baskerville",
       };
       showToast(`✓ Display font changed to ${labels[font] || font}`);
     }
