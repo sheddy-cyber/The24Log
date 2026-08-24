@@ -1,11 +1,8 @@
 const STORAGE_KEY = "the24log:v1";
 const DAY_CTRL_ANIMS = [
-  "anim-diagonal",
-  "anim-horizontal",
-  "anim-vertical",
-  "anim-crosshatch",
-  "anim-dots",
-  "anim-shallow",
+  "anim-aurora",
+  "anim-prism",
+  "anim-constellation",
 ];
 const dayCtrlAnim =
   DAY_CTRL_ANIMS[Math.floor(Math.random() * DAY_CTRL_ANIMS.length)];
@@ -55,7 +52,13 @@ const defaultState = {
     },
   ],
   reflections: {},
-  settings: { reminder: false, reminderMinutes: 60, weekStartsMonday: true, darkMode: false },
+  settings: {
+    reminder: false,
+    reminderMinutes: 60,
+    weekStartsMonday: true,
+    darkMode: false,
+    displayFont: "lobster-two",
+  },
 };
 
 let state = loadState();
@@ -110,7 +113,9 @@ function navigateToPage(targetPage, options = {}) {
   }
 
   render();
-  const targetScroll = options.resetScroll ? 0 : (pageScrollPositions[targetPage] || 0);
+  const targetScroll = options.resetScroll
+    ? 0
+    : pageScrollPositions[targetPage] || 0;
   window.scrollTo({ top: targetScroll, behavior: "instant" });
 }
 
@@ -131,7 +136,22 @@ function loadState() {
         : structuredClone(defaultCategories),
       entries: parsed.entries || {},
       reflections: parsed.reflections || {},
-      settings: { ...defaultState.settings, ...parsed.settings },
+      settings: {
+        ...defaultState.settings,
+        ...parsed.settings,
+        displayFont: [
+          "ibm-plex-sans",
+          "lobster-two",
+          "averia-serif-libre",
+        ].includes(parsed.settings?.displayFont)
+          ? parsed.settings.displayFont
+          : parsed.settings?.displayFont === "fredoka" ||
+              parsed.settings?.displayFont === "pt-serif"
+            ? "averia-serif-libre"
+            : parsed.settings?.displayFont === "inter"
+              ? "ibm-plex-sans"
+              : "lobster-two",
+      },
     };
   } catch {
     return structuredClone(defaultState);
@@ -279,7 +299,11 @@ function icon(name) {
 }
 
 function render() {
-  document.documentElement.dataset.theme = state.settings.darkMode ? 'dark' : 'light';
+  document.documentElement.dataset.theme = state.settings.darkMode
+    ? "dark"
+    : "light";
+  document.documentElement.dataset.font =
+    state.settings.displayFont || "lobster-two";
   app.innerHTML = `
     <div class="app-shell">
       ${sidebar()}
@@ -492,7 +516,16 @@ function todayPage() {
 
 function metricCard(label, value, caption, type) {
   const symbol = { clock: "◷", score: "✦", unplanned: "↯", focus: "◎" }[type];
-  return `<article class="metric-card metric-${type}"><span class="metric-symbol">${symbol}</span><div class="metric-card-body"><p>${label}</p><strong>${value}</strong><small>${caption}</small></div></article>`;
+  return `<article class="metric-card metric-${type}">
+    <div class="metric-card-header">
+      <span class="metric-symbol">${symbol}</span>
+      <span class="metric-label">${label}</span>
+    </div>
+    <div class="metric-card-body">
+      <strong class="metric-value">${value}</strong>
+      <small class="metric-caption">${caption}</small>
+    </div>
+  </article>`;
 }
 
 function getTopCategory(dates) {
@@ -519,7 +552,8 @@ function hourRow(hour) {
   const entry = entryFor(selectedDate, hour);
   const current = isToday(selectedDate) && new Date().getHours() === hour;
   const label = formatHour(hour);
-  const shouldOpen = editHour === hour || (!entry && current && editHour === null);
+  const shouldOpen =
+    editHour === hour || (!entry && current && editHour === null);
   if (shouldOpen) {
     return `<article class="hour-row ${current ? "current-hour" : ""} ${editHour === hour ? "editing" : ""}">
       <div class="hour-label"><strong>${label}</strong><small>${formatHour((hour + 1) % 24)}</small></div>
@@ -527,7 +561,7 @@ function hourRow(hour) {
         <label class="category-select"><select name="categoryId" aria-label="Category"><option value="">Choose a category</option>${state.categories.map((category) => `<option value="${category.id}" ${entry?.categoryId === category.id ? "selected" : ""}>${category.icon} ${category.name}</option>`).join("")}</select></label>
         <input name="title" maxlength="140" placeholder="What did you do?" value="${escapeHtml(entry?.title || "")}" aria-label="What did you do?" required />
         <input name="project" maxlength="35" placeholder="Project (optional)" value="${escapeHtml(entry?.project || "")}" aria-label="Project tag" />
-        <button class="save-entry" type="submit">Save</button>
+        <button class="button primary small save-entry" type="submit">Save</button>
       </form>
     </article>`;
   }
@@ -953,10 +987,72 @@ function emptyGoals() {
 }
 
 function settingsPage() {
+  const currentFont = state.settings.displayFont || "lobster-two";
   return `<div class="page-wrap settings-page">
     ${pageHeading("MAKE IT YOURS", "Settings", "Set up the small details that make the ledger easy to keep.")}
+    
+    <section class="type-foundry-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">AESTHETICS & TYPOGRAPHY</p>
+          <h2>Display Typographic Voice</h2>
+          <p>Choose the personality for your headers, ledger metrics, and hour quotes.</p>
+        </div>
+      </div>
+      
+      <div class="type-specimen-rack">
+        <button type="button" class="specimen-row ${currentFont === "lobster-two" ? "active" : ""}" data-action="set-display-font" data-font="lobster-two">
+          <div class="specimen-meta">
+            <span class="specimen-radio ${currentFont === "lobster-two" ? "checked" : ""}"></span>
+            <div class="specimen-labels">
+              <strong>Lobster Two</strong>
+              <span class="specimen-tag">Script • Expressive</span>
+            </div>
+          </div>
+          <div class="specimen-phrase font-lobster">
+            "Own your 24 hours with playful expression."
+          </div>
+          <div class="specimen-action">
+            ${currentFont === "lobster-two" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
+          </div>
+        </button>
+
+        <button type="button" class="specimen-row ${currentFont === "ibm-plex-sans" ? "active" : ""}" data-action="set-display-font" data-font="ibm-plex-sans">
+          <div class="specimen-meta">
+            <span class="specimen-radio ${currentFont === "ibm-plex-sans" ? "checked" : ""}"></span>
+            <div class="specimen-labels">
+              <strong>IBM Plex Sans</strong>
+              <span class="specimen-tag">Grotesque • Engineering</span>
+            </div>
+          </div>
+          <div class="specimen-phrase font-ibm-plex">
+            "Own your 24 hours with engineered precision."
+          </div>
+          <div class="specimen-action">
+            ${currentFont === "ibm-plex-sans" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
+          </div>
+        </button>
+
+        <button type="button" class="specimen-row ${currentFont === "averia-serif-libre" ? "active" : ""}" data-action="set-display-font" data-font="averia-serif-libre">
+          <div class="specimen-meta">
+            <span class="specimen-radio ${currentFont === "averia-serif-libre" ? "checked" : ""}"></span>
+            <div class="specimen-labels">
+              <strong>Averia Serif Libre</strong>
+              <span class="specimen-tag">Organic • Vintage Serif</span>
+            </div>
+          </div>
+          <div class="specimen-phrase font-averia">
+            "Own your 24 hours with timeless, organic warmth."
+          </div>
+          <div class="specimen-action">
+            ${currentFont === "averia-serif-libre" ? '<span class="specimen-badge active">Active Voice</span>' : '<span class="specimen-badge select">Select</span>'}
+          </div>
+        </button>
+      </div>
+    </section>
+
     <section class="settings-layout">
-      <article class="card settings-card"><div class="section-heading"><div><p class="eyebrow">CATEGORIES</p><h2>Your time labels</h2><p>Each category has a colour and an impact on your score.</p></div><button class="button small" data-action="open-category-modal">${icon("plus")} Add category</button></div><div class="category-guideline"><span class="guideline-icon">⚙︎</span><div><strong>Customize to your preferences</strong><p>Hit <b>⋯</b> on any label to rename it, repaint it, or rewire how it scores your day. Don't like "Work"? Call it "The Grind." Add a new one for anything that doesn't fit a box.</p></div></div><div class="category-settings">${state.categories.map(categorySetting).join("")}</div></article>
+      <article class="card settings-card"><div class="section-heading"><div><p class="eyebrow">CATEGORIES</p><h2>Your time labels</h2><p>Each category has a colour and an impact on your score.</p></div><button class="button small" data-action="open-category-modal">${icon("plus")} Add category</button></div><div class="category-settings">${state.categories.map(categorySetting).join("")}</div></article>
       <aside class="settings-side">
         <article class="card pwa-card"><div class="setting-icon pwa-icon">📲</div><div><p class="eyebrow">OFFLINE APP</p><h2>Install 24 Log</h2><p>Install to your phone or desktop for quick access and full offline logging.</p></div><button class="button secondary small" data-action="install-pwa">${deferredInstallPrompt ? "Install App" : "Install Info"}</button></article>
         <article class="card reminder-card"><div class="setting-icon">♢</div><div><p class="eyebrow">GENTLE REMINDERS</p><h2>Remember to log</h2><p>Notifications arrive at the end of each hour block (e.g. 7:00 to log 6:00–7:00).</p></div><label class="switch"><input type="checkbox" data-setting="reminder" ${state.settings.reminder ? "checked" : ""}/><span></span></label><div class="reminder-frequency"><label>Remind at end of <select data-setting="reminderMinutes"><option value="60" ${state.settings.reminderMinutes === 60 ? "selected" : ""}>every hour</option><option value="120" ${state.settings.reminderMinutes === 120 ? "selected" : ""}>every 2 hours</option><option value="180" ${state.settings.reminderMinutes === 180 ? "selected" : ""}>every 3 hours</option></select></label></div></article>
@@ -1160,7 +1256,11 @@ function escapeHtml(value) {
 
 function openModal(type, id = null, hour = null) {
   if (!activeModal) {
-    history.pushState({ page: activePage, modal: true }, "", window.location.hash);
+    history.pushState(
+      { page: activePage, modal: true },
+      "",
+      window.location.hash,
+    );
   }
   activeModal = { type, id, hour };
   render();
@@ -1213,7 +1313,15 @@ function removeCategory(id) {
 
 function msUntilNextTopOfHour() {
   const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+  const next = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    now.getHours() + 1,
+    0,
+    0,
+    0,
+  );
   return next.getTime() - now.getTime();
 }
 
@@ -1306,13 +1414,17 @@ app.addEventListener("click", async (event) => {
         render();
       });
     } else {
-      showToast("To install: Tap 'Share' → 'Add to Home Screen' in Safari on iOS, or 'Install' in Chrome/Edge.");
+      showToast(
+        "To install: Tap 'Share' → 'Add to Home Screen' in Safari on iOS, or 'Install' in Chrome/Edge.",
+      );
     }
     return;
   }
   if (action === "save-reflection") {
     const date = target.dataset.date || selectedDate;
-    const textarea = document.querySelector(`textarea[data-reflection="${date}"]`);
+    const textarea = document.querySelector(
+      `textarea[data-reflection="${date}"]`,
+    );
     if (textarea) {
       const value = textarea.value.trim();
       if (value) {
@@ -1349,7 +1461,8 @@ app.addEventListener("click", async (event) => {
     return;
   }
   if (action === "open-quick-log") {
-    const hour = target.dataset.hour !== undefined ? Number(target.dataset.hour) : null;
+    const hour =
+      target.dataset.hour !== undefined ? Number(target.dataset.hour) : null;
     return openModal("quick-log", null, hour);
   }
   if (action === "close-modal") return closeModal();
@@ -1377,6 +1490,23 @@ app.addEventListener("click", async (event) => {
   if (action === "open-settings") {
     closeModal();
     navigateToPage("settings");
+    return;
+  }
+  if (action === "set-display-font") {
+    const btn = target.closest("[data-font]");
+    const font = btn?.dataset.font;
+    if (font) {
+      state.settings.displayFont = font;
+      saveState();
+      document.documentElement.dataset.font = font;
+      render();
+      const labels = {
+        "ibm-plex-sans": "IBM Plex Sans",
+        "lobster-two": "Lobster Two",
+        "averia-serif-libre": "Averia Serif Libre",
+      };
+      showToast(`✓ Display font changed to ${labels[font] || font}`);
+    }
     return;
   }
   if (action === "shift-month") {
@@ -1529,9 +1659,14 @@ app.addEventListener("change", async (event) => {
         (!("Notification" in window) || Notification.permission === "granted");
       if (input.checked && !state.settings.reminder)
         showToast("Notification permission is needed for reminders.");
-    } else if (input.type === "checkbox")
+    } else if (input.type === "checkbox") {
       state.settings[input.dataset.setting] = input.checked;
-    else state.settings[input.dataset.setting] = Number(input.value);
+    } else {
+      state.settings[input.dataset.setting] =
+        input.dataset.setting === "displayFont" || isNaN(Number(input.value))
+          ? input.value
+          : Number(input.value);
+    }
     saveState();
     startReminder();
     render();

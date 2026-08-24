@@ -12,21 +12,29 @@
     <meta name="apple-mobile-web-app-title" content="24 Log" />
     
     <!-- Icons & Manifest -->
-    <link rel="icon" type="image/svg+xml" href="/public/icon.svg?v=462" />
-    <link rel="apple-touch-icon" href="/public/icon.svg?v=462" />
-    <link rel="manifest" href="/manifest.webmanifest?v=462" />
+    <link rel="icon" type="image/svg+xml" href="/public/icon.svg?v=520" />
+    <link rel="apple-touch-icon" href="/public/icon.svg?v=520" />
+    <link rel="manifest" href="/manifest.webmanifest?v=520" />
     
-    <link rel="stylesheet" href="/src/style.css?v=505" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="/src/style.css?v=880" />
     <title>The 24 Log — own your hours</title>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js?v=501"></script>
+    <script type="module" src="/src/main.js?v=880"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+            .then(reg => {
+              console.log('PWA Service Worker registered:', reg.scope);
+              reg.update();
+            })
             .catch(err => console.error('PWA Service Worker registration failed:', err));
         });
       }
