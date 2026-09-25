@@ -755,165 +755,324 @@ h2 {
 }
 
 /* ==========================================================================
-   Dual-Curved Arch Bracket Stat Cards (Top & Bottom Arch, Zero Sides)
+   Summary Grid & Metric Cards — Chronometer Ledger Aesthetic
    ========================================================================== */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   gap: 16px;
-  margin: 20px 0 38px;
+  margin: 20px 0 36px;
 }
+
 .metric-card {
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: 16px;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  padding: 16px 18px 15px;
+  border-radius: 18px;
+  border: 1px solid var(--metric-border-hover, rgba(99, 102, 241, 0.4));
+  background: var(--metric-card-bg, linear-gradient(160deg, #ffffff 0%, #f7f9fd 100%));
+  box-shadow:
+    0 12px 28px -4px var(--metric-shadow-hover, rgba(99, 102, 241, 0.16)),
+    0 3px 8px rgba(18, 29, 50, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  padding: 18px 18px 16px;
   cursor: default;
   user-select: none;
-  min-height: 126px;
-}
-.metric-card:hover {
-  transform: none !important;
-  box-shadow: none !important;
+  min-height: 138px;
+  overflow: hidden;
 }
 
-/* Top Curved Arch Bracket */
+/* Ambient Radial Specular Glow in top-right corner */
 .metric-card::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 20px;
-  border-top: 2.5px solid var(--metric-color, #6366f1);
-  border-left: 2.5px solid var(--metric-color, #6366f1);
-  border-right: 2.5px solid var(--metric-color, #6366f1);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  top: -20px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--metric-ambient, rgba(99, 102, 241, 0.12)) 0%, transparent 70%);
   pointer-events: none;
-  box-sizing: border-box;
+  opacity: 1;
+  transform: scale(1.15);
 }
 
-/* Bottom Curved Arch Bracket */
+/* Delicate Top Specular Accent Line */
 .metric-card::after {
   content: "";
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 20px;
-  border-bottom: 2.5px solid var(--metric-color-end, var(--metric-color, #6366f1));
-  border-left: 2.5px solid var(--metric-color-end, var(--metric-color, #6366f1));
-  border-right: 2.5px solid var(--metric-color-end, var(--metric-color, #6366f1));
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 2px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--metric-color, #6366f1) 50%, transparent 100%);
+  opacity: 0.85;
   pointer-events: none;
-  box-sizing: border-box;
 }
 
+.metric-card:hover {
+  transform: none !important;
+  box-shadow:
+    0 12px 28px -4px var(--metric-shadow-hover, rgba(99, 102, 241, 0.16)),
+    0 3px 8px rgba(18, 29, 50, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  border-color: var(--metric-border-hover, rgba(99, 102, 241, 0.4)) !important;
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.metric-card:hover::after {
+  opacity: 0.85;
+}
+
+/* Header */
 .metric-card-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
 }
+
+.metric-label-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .metric-label {
   margin: 0;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: #64748b;
-  order: 1;
-}
-.metric-symbol {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  order: 2;
+  line-height: 1.2;
 }
 
+.metric-icon-wrap,
+.metric-symbol {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--metric-icon-bg, #eef2ff);
+  color: var(--metric-icon-color, #4f46e5);
+  border: 1px solid var(--metric-icon-border, #dbeafe);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  transform: scale(1.08);
+}
+
+.metric-card:hover .metric-icon-wrap,
+.metric-card:hover .metric-symbol {
+  transform: scale(1.08);
+}
+
+.metric-icon-wrap svg,
+.metric-symbol svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: block;
+}
+
+/* Body */
 .metric-card-body {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  margin-top: 10px;
+  margin-top: 12px;
 }
+
+.metric-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .metric-value,
 .metric-card strong {
-  display: block;
-  font-family: var(--font-display);
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-display) !important;
   font-size: 30px;
   font-weight: var(--display-weight, 500);
   line-height: 1.05;
   letter-spacing: var(--display-letter-spacing, -0.025em);
-  color: #0f172a;
-  margin-bottom: 4px;
+  color: #111e33;
+  margin: 0;
 }
+
+.metric-unit {
+  font-family: "DM Mono", monospace;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #8292a8;
+  margin-left: 2px;
+  letter-spacing: 0;
+}
+
+/* Category value display in Top Focus */
+.metric-focus .metric-value {
+  font-size: 23px;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dynamic Status Pills / Badges */
+.metric-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4.5px;
+  padding: 2.5px 8px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.metric-badge.badge-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.metric-badge.badge-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.metric-badge.badge-warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.metric-badge.badge-danger {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
+.metric-badge.badge-rose,
+.metric-unplanned .metric-badge.badge-success {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+.metric-badge.badge-neutral {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.metric-badge.badge-category {
+  background: rgba(var(--cat-color-rgb, 99, 102, 241), 0.08);
+  color: var(--cat-color, #4f46e5);
+  border: 1px solid rgba(var(--cat-color-rgb, 99, 102, 241), 0.22);
+}
+
+.metric-badge .cat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  background: currentColor;
+}
+
+/* Micro-Progress Rail (for Logged Card) */
+.metric-progress-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 99px;
+  background: #e9eef5;
+  overflow: hidden;
+  margin: 9px 0 6px;
+}
+
+.metric-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6366f1 0%, #38bdf8 100%);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Caption */
 .metric-caption,
 .metric-card small {
   display: block;
   font-size: 11.5px;
   font-weight: 500;
   color: #64748b;
-  line-height: 1.25;
+  line-height: 1.35;
+  margin-top: 6px;
 }
 
-/* Arch Color Themes (Light Mode) */
+/* Color Themes (Light Mode) */
 .metric-clock {
   --metric-color: #6366f1;
   --metric-color-end: #818cf8;
-  box-shadow: none;
-}
-.metric-clock .metric-symbol {
-  background: #e0e7ff;
-  color: #4338ca;
-  border: 1px solid #c7d2fe;
+  --metric-ambient: rgba(99, 102, 241, 0.12);
+  --metric-border-hover: rgba(99, 102, 241, 0.4);
+  --metric-shadow-hover: rgba(99, 102, 241, 0.16);
+  --metric-icon-bg: #eef2ff;
+  --metric-icon-color: #4f46e5;
+  --metric-icon-border: #dbeafe;
 }
 
 .metric-score {
   --metric-color: #059669;
   --metric-color-end: #34d399;
-  box-shadow: none;
-}
-.metric-score .metric-symbol {
-  background: #d1fae5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  --metric-ambient: rgba(16, 185, 129, 0.12);
+  --metric-border-hover: rgba(16, 185, 129, 0.4);
+  --metric-shadow-hover: rgba(16, 185, 129, 0.16);
+  --metric-icon-bg: #ecfdf5;
+  --metric-icon-color: #047857;
+  --metric-icon-border: #d1fae5;
 }
 
 .metric-unplanned {
-  --metric-color: #dc2626;
-  --metric-color-end: #f87171;
-  box-shadow: none;
-}
-.metric-unplanned .metric-symbol {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  --metric-color: #e11d48;
+  --metric-color-end: #f43f5e;
+  --metric-ambient: rgba(244, 63, 94, 0.12);
+  --metric-border-hover: rgba(244, 63, 94, 0.4);
+  --metric-shadow-hover: rgba(244, 63, 94, 0.16);
+  --metric-icon-bg: #fff1f2;
+  --metric-icon-color: #be123c;
+  --metric-icon-border: #ffe4e6;
 }
 
 .metric-focus {
   --metric-color: #d97706;
   --metric-color-end: #fbbf24;
-  box-shadow: none;
-}
-.metric-focus .metric-symbol {
-  background: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  --metric-ambient: rgba(245, 158, 11, 0.12);
+  --metric-border-hover: rgba(245, 158, 11, 0.4);
+  --metric-shadow-hover: rgba(245, 158, 11, 0.16);
+  --metric-icon-bg: #fffbeb;
+  --metric-icon-color: #b45309;
+  --metric-icon-border: #fef3c7;
 }
 
 .ledger-section {
@@ -2954,31 +3113,46 @@ h2 {
     display: block;
   }
   .summary-grid {
-    align-items: start;
-    gap: 9px;
-    margin: 12px 0 20px;
+    align-items: stretch;
+    gap: 10px;
+    margin: 14px 0 24px;
   }
   .metric-card {
     min-height: auto;
-    padding: 12px 12px 11px;
-    border-radius: 13px;
+    padding: 13px 12px 12px;
+    border-radius: 14px;
   }
+  .metric-icon-wrap,
   .metric-symbol {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 7px;
-    font-size: 12px;
+  }
+  .metric-icon-wrap svg,
+  .metric-symbol svg {
+    width: 13px;
+    height: 13px;
   }
   .metric-label {
     font-size: 10px;
   }
   .metric-card-body {
-    margin-top: 6px;
+    margin-top: 8px;
   }
   .metric-value,
   .metric-card strong {
-    font-size: 22px;
-    margin-bottom: 2px;
+    font-size: 23px;
+    margin-bottom: 0;
+  }
+  .metric-unit {
+    font-size: 12.5px;
+  }
+  .metric-focus .metric-value {
+    font-size: 18px;
+  }
+  .metric-badge {
+    font-size: 9.5px;
+    padding: 2px 6px;
   }
   .metric-caption,
   .metric-card small {
@@ -3250,16 +3424,31 @@ h2 {
 @media (max-width: 410px) {
   .summary-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
   .metric-card {
-    padding: 10px 8px;
-    min-height: 105px;
+    padding: 11px 9px 10px;
+    min-height: auto;
+    border-radius: 12px;
   }
+  .metric-value,
   .metric-card strong {
-    font-size: 22px;
+    font-size: 20px;
   }
+  .metric-focus .metric-value,
   .metric-focus strong {
-    font-size: 17px;
+    font-size: 15px;
+  }
+  .metric-unit {
+    font-size: 11px;
+  }
+  .metric-badge {
+    font-size: 8.5px;
+    padding: 1.5px 5px;
+  }
+  .metric-caption,
+  .metric-card small {
+    font-size: 9.5px;
   }
   .page-header {
     flex-direction: column;
@@ -3438,65 +3627,130 @@ h1,
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 [data-theme="dark"] .metric-card {
-  border: none;
-  background: transparent;
-  box-shadow: none;
+  background: linear-gradient(160deg, #152033 0%, #10192a 100%);
+  border: 1.5px solid var(--metric-border-hover, var(--metric-color));
+  box-shadow:
+    0 14px 30px -4px rgba(0, 0, 0, 0.5),
+    0 0 20px -6px var(--metric-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: default;
 }
+
+[data-theme="dark"] .metric-card::before {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
 [data-theme="dark"] .metric-card:hover {
   transform: none !important;
-  box-shadow: none !important;
+  border-color: var(--metric-border-hover, var(--metric-color)) !important;
+  box-shadow:
+    0 14px 30px -4px rgba(0, 0, 0, 0.5),
+    0 0 20px -6px var(--metric-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
+
 [data-theme="dark"] .metric-label {
-  color: #798ea8;
+  color: #8799b0;
 }
+
 [data-theme="dark"] .metric-value,
 [data-theme="dark"] .metric-card strong {
-  color: #ffffff;
+  color: #f1f5f9;
 }
+
+[data-theme="dark"] .metric-unit {
+  color: #6d829d;
+}
+
 [data-theme="dark"] .metric-caption,
 [data-theme="dark"] .metric-card small {
   color: #8da2bd;
 }
 
+[data-theme="dark"] .metric-progress-track {
+  background: #19273f;
+}
+
+[data-theme="dark"] .metric-progress-fill {
+  background: linear-gradient(90deg, #818cf8 0%, #38bdf8 100%);
+}
+
+[data-theme="dark"] .metric-badge.badge-neutral {
+  background: #162438;
+  color: #8ea1b8;
+  border-color: #243854;
+}
+
+[data-theme="dark"] .metric-badge.badge-success {
+  background: rgba(16, 185, 129, 0.16);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+[data-theme="dark"] .metric-badge.badge-info {
+  background: rgba(99, 102, 241, 0.16);
+  color: #a5b4fc;
+  border-color: rgba(129, 140, 248, 0.3);
+}
+
+[data-theme="dark"] .metric-badge.badge-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .metric-badge.badge-danger {
+  background: rgba(244, 63, 94, 0.16);
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.3);
+}
+
+[data-theme="dark"] .metric-badge.badge-rose,
+[data-theme="dark"] .metric-unplanned .metric-badge.badge-success {
+  background: rgba(244, 63, 94, 0.16);
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.3);
+}
+
 [data-theme="dark"] .metric-clock {
   --metric-color: #818cf8;
   --metric-color-end: #6366f1;
-}
-[data-theme="dark"] .metric-clock .metric-symbol {
-  background: #1a2846;
-  color: #818cf8;
-  border-color: #233454;
+  --metric-ambient: rgba(99, 102, 241, 0.22);
+  --metric-border-hover: #818cf8;
+  --metric-icon-bg: #1a2846;
+  --metric-icon-color: #a5b4fc;
+  --metric-icon-border: #27395c;
 }
 
 [data-theme="dark"] .metric-score {
   --metric-color: #34d399;
   --metric-color-end: #059669;
-}
-[data-theme="dark"] .metric-score .metric-symbol {
-  background: #0d2b20;
-  color: #34d399;
-  border-color: #164e3b;
+  --metric-ambient: rgba(16, 185, 129, 0.22);
+  --metric-border-hover: #34d399;
+  --metric-icon-bg: #0d2b20;
+  --metric-icon-color: #6ee7b7;
+  --metric-icon-border: #164e3b;
 }
 
 [data-theme="dark"] .metric-unplanned {
-  --metric-color: #f87171;
-  --metric-color-end: #dc2626;
-}
-[data-theme="dark"] .metric-unplanned .metric-symbol {
-  background: #33151b;
-  color: #f87171;
-  border-color: #54222c;
+  --metric-color: #fb7185;
+  --metric-color-end: #e11d48;
+  --metric-ambient: rgba(244, 63, 94, 0.22);
+  --metric-border-hover: #fb7185;
+  --metric-icon-bg: #33151b;
+  --metric-icon-color: #fda4af;
+  --metric-icon-border: #54222c;
 }
 
 [data-theme="dark"] .metric-focus {
   --metric-color: #fbbf24;
   --metric-color-end: #d97706;
-}
-[data-theme="dark"] .metric-focus .metric-symbol {
-  background: #2b1f0d;
-  color: #fbbf24;
-  border-color: #4d3714;
+  --metric-ambient: rgba(245, 158, 11, 0.22);
+  --metric-border-hover: #fbbf24;
+  --metric-icon-bg: #2b1f0d;
+  --metric-icon-color: #fcd34d;
+  --metric-icon-border: #4d3714;
 }
 
 /* Day Control Banner */
@@ -4515,12 +4769,13 @@ h3 {
     margin: 14px 0 28px;
   }
   .metric-card {
-    min-height: 103px;
-    padding: 12px 12px 11px;
-    border-radius: 13px;
+    min-height: auto;
+    padding: 13px 12px 12px;
+    border-radius: 14px;
   }
+  .metric-value,
   .metric-card strong {
-    font-size: 24px;
+    font-size: 23px;
   }
   .timeline {
     width: 100%;

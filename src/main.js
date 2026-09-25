@@ -1,9 +1,5 @@
 const STORAGE_KEY = "the24log:v1";
-const DAY_CTRL_ANIMS = [
-  "anim-aurora",
-  "anim-prism",
-  "anim-constellation",
-];
+const DAY_CTRL_ANIMS = ["anim-aurora", "anim-prism", "anim-constellation"];
 const dayCtrlAnim =
   DAY_CTRL_ANIMS[Math.floor(Math.random() * DAY_CTRL_ANIMS.length)];
 
@@ -139,11 +135,9 @@ function loadState() {
       settings: {
         ...defaultState.settings,
         ...parsed.settings,
-        displayFont: [
-          "raleway",
-          "lobster-two",
-          "libre-baskerville",
-        ].includes(parsed.settings?.displayFont)
+        displayFont: ["raleway", "lobster-two", "libre-baskerville"].includes(
+          parsed.settings?.displayFont,
+        )
           ? parsed.settings.displayFont
           : parsed.settings?.displayFont === "fredoka" ||
               parsed.settings?.displayFont === "pt-serif" ||
@@ -296,6 +290,14 @@ function icon(name) {
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Zm6 12 .7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7L18 15Z"/></svg>',
     more: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
     bell: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9Z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    clock:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+    unplanned:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>',
+    focus:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+    score:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Zm6 12 .7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7L18 15Z"/></svg>',
   };
   return icons[name] || "";
 }
@@ -492,6 +494,60 @@ function todayPage() {
     ? '<button class="button secondary" disabled style="opacity: 0.65; cursor: default;">Today</button>'
     : '<button class="button primary" data-action="jump-today">↵ Return to Today</button>';
 
+  const topCat = getTopCategoryData([selectedDate]);
+  const unplannedHours = hoursByCategory([selectedDate])["unplanned"] || 0;
+  const unplannedGoal = state.goals.find(
+    (item) => item.categoryId === "unplanned" && item.period === "day",
+  );
+  let unplannedBadge = "";
+  if (unplannedGoal) {
+    if (unplannedHours <= unplannedGoal.target) {
+      unplannedBadge = '<span class="metric-badge badge-rose">Within buffer</span>';
+    } else {
+      const over = unplannedHours - unplannedGoal.target;
+      unplannedBadge = `<span class="metric-badge badge-danger">+${over}h over</span>`;
+    }
+  } else {
+    unplannedBadge = unplannedHours === 0
+      ? '<span class="metric-badge badge-rose">Zero drift</span>'
+      : unplannedHours <= 2
+        ? '<span class="metric-badge badge-info">Light drift</span>'
+        : '<span class="metric-badge badge-warning">Spontaneous</span>';
+  }
+
+  const scoreBadge = score === null
+    ? '<span class="metric-badge badge-neutral">Awaiting data</span>'
+    : score >= 70
+      ? '<span class="metric-badge badge-success">✦ Optimal</span>'
+      : score >= 50
+        ? '<span class="metric-badge badge-info">Steady</span>'
+        : score > 0
+          ? '<span class="metric-badge badge-warning">Needs focus</span>'
+          : '<span class="metric-badge badge-danger">0% Focus</span>';
+
+  const scoreCaption = score === null
+    ? "Log hours to calculate"
+    : score >= 70
+      ? "Strong intentional time use"
+      : score >= 50
+        ? "Balanced momentum today"
+        : "Reset focus on your next hour";
+
+  const loggedOpen = 24 - logged;
+  const loggedCaption = logged === 24
+    ? "Full 24-hour ledger complete"
+    : logged
+      ? `${loggedOpen} open ${loggedOpen === 1 ? "hour" : "hours"} remaining`
+      : "Start with your first hour";
+
+  const focusBadge = topCat
+    ? `<span class="metric-badge badge-category" style="--cat-color:${topCat.color};"><span class="cat-dot"></span>${topCat.hours}h logged</span>`
+    : '<span class="metric-badge badge-neutral">No entries</span>';
+
+  const focusCaption = topCat
+    ? `${Math.round((topCat.hours / Math.max(1, logged)) * 100)}% of your logged time`
+    : "Your primary focus today";
+
   return `
     <div class="page-wrap today-page">
       ${pageHeading(eyebrow, headingTitle, headingDesc, headerAction)}
@@ -500,10 +556,39 @@ function todayPage() {
         <div class="day-meter"><div><strong>${logged}<span>/24</span></strong><small>hrs logged</small></div><div class="progress-track"><i style="width:${completePercent}%"></i></div></div>
       </section>
       <section class="summary-grid">
-        ${metricCard("Logged", `${logged}h`, logged ? `${24 - logged} still open` : "Start with one hour", "clock")}
-        ${metricCard("Productivity", score === null ? "—" : `${score}`, score === null ? "Log hours to calculate" : score >= 70 ? "Strong use of time" : score >= 50 ? "Room to improve" : "Reset your next hour", "score")}
-        ${metricCard("Unplanned", `${hoursByCategory([selectedDate])["unplanned"] || 0}h`, goalTextFor("unplanned", "day"), "unplanned")}
-        ${metricCard("Top focus", getTopCategory([selectedDate]), "Your most logged category", "focus")}
+        ${metricCard({
+          type: "clock",
+          label: "Logged",
+          value: `${logged}`,
+          unit: "h",
+          badge: `<span class="metric-badge badge-info">${logged}/24h</span>`,
+          progressHtml: `<div class="metric-progress-track" aria-hidden="true" title="${completePercent}% of 24h"><div class="metric-progress-fill" style="width:${completePercent}%"></div></div>`,
+          caption: loggedCaption,
+        })}
+        ${metricCard({
+          type: "score",
+          label: "Productivity",
+          value: score === null ? "—" : `${score}`,
+          unit: score === null ? "" : "%",
+          badge: scoreBadge,
+          caption: scoreCaption,
+        })}
+        ${metricCard({
+          type: "unplanned",
+          label: "Unplanned",
+          value: `${unplannedHours}`,
+          unit: "h",
+          badge: unplannedBadge,
+          caption: goalTextFor("unplanned", "day"),
+        })}
+        ${metricCard({
+          type: "focus",
+          label: "Top focus",
+          value: topCat ? escapeHtml(topCat.name) : "—",
+          badge: focusBadge,
+          style: topCat ? `--metric-color:${topCat.color};--metric-border-hover:${topCat.color};` : "",
+          caption: focusCaption,
+        })}
       </section>
       ${yesterdayIntentionCard()}
       <section class="ledger-section">
@@ -516,24 +601,79 @@ function todayPage() {
     </div>`;
 }
 
-function metricCard(label, value, caption, type) {
-  const symbol = { clock: "◷", score: "✦", unplanned: "↯", focus: "◎" }[type];
-  return `<article class="metric-card metric-${type}">
+function metricCard(configOrLabel, maybeValue, maybeCaption, maybeType) {
+  let config = {};
+  if (typeof configOrLabel === "object" && configOrLabel !== null) {
+    config = configOrLabel;
+  } else {
+    let displayVal = maybeValue;
+    let displayUnit = "";
+    if (typeof displayVal === "string") {
+      const match = displayVal.match(/^(.+?)(%|h|\/24h)$/);
+      if (match) {
+        displayVal = match[1];
+        displayUnit = match[2];
+      }
+    }
+    config = {
+      label: configOrLabel,
+      value: displayVal,
+      unit: displayUnit,
+      caption: maybeCaption,
+      type: maybeType || "clock",
+    };
+  }
+
+  const {
+    type = "clock",
+    label = "",
+    value = "—",
+    unit = "",
+    caption = "",
+    badge = "",
+    progressHtml = "",
+    style = "",
+  } = config;
+
+  const iconSvg = icon(type) || icon("spark");
+
+  return `<article class="metric-card metric-${type}" ${style ? `style="${style}"` : ""}>
     <div class="metric-card-header">
-      <span class="metric-symbol">${symbol}</span>
-      <span class="metric-label">${label}</span>
+      <div class="metric-label-group">
+        <span class="metric-label">${label}</span>
+      </div>
+      <div class="metric-icon-wrap" aria-hidden="true">${iconSvg}</div>
     </div>
     <div class="metric-card-body">
-      <strong class="metric-value">${value}</strong>
+      <div class="metric-value-row">
+        <strong class="metric-value">${value}${unit ? `<span class="metric-unit">${unit}</span>` : ""}</strong>
+        ${badge || ""}
+      </div>
+      ${progressHtml || ""}
       <small class="metric-caption">${caption}</small>
     </div>
   </article>`;
 }
 
-function getTopCategory(dates) {
+function getTopCategoryData(dates) {
   const totals = hoursByCategory(dates);
   const top = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-  return top?.[1] ? categoryFor(top[0]).name : "—";
+  if (top && top[1] > 0) {
+    const cat = categoryFor(top[0]);
+    return {
+      id: cat.id,
+      name: cat.name,
+      hours: top[1],
+      color: cat.color || "#3569e8",
+      icon: cat.icon || "✦",
+    };
+  }
+  return null;
+}
+
+function getTopCategory(dates) {
+  const info = getTopCategoryData(dates);
+  return info ? info.name : "—";
 }
 
 function goalTextFor(categoryId, period) {
