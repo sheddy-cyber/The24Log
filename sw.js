@@ -3,7 +3,7 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/public/icon.svg'
+  '/icon.svg'
 ];
 
 // Install Event: Pre-cache essential app shell assets

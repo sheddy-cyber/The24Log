@@ -25,8 +25,8 @@ fs.mkdirSync('./dist');
 const filesToCopy = [
   'index.html',
   'manifest.webmanifest',
-  'public',
   'sw.js',
+  'icon.svg',
   'src'
 ];
 

@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="128" fill="#111c31"/>
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#9ce3ca" stroke-width="24"/>
-  <text x="256" y="264" font-family="'DM Mono', 'Space Mono', monospace, sans-serif" font-size="200" font-weight="700" fill="#9ce3ca" text-anchor="middle" dominant-baseline="central">24</text>
-</svg>
