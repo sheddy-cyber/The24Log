@@ -1,18 +1,29 @@
 {
   "name": "The 24 Log",
   "short_name": "24 Log",
-  "description": "A personal 24-hour time ledger.",
-  "start_url": "/",
+  "description": "A private 24-hour time ledger.",
+  "start_url": "/#today",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#111c31",
-  "theme_color": "#111c31",
+  "background_color": "#f7f3ea",
+  "theme_color": "#121d32",
   "icons": [
     {
-      "src": "/public/icon.svg",
+      "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today",
+      "url": "/#today"
+    },
+    {
+      "name": "Insights",
+      "url": "/#insights"
     }
   ]
 }
