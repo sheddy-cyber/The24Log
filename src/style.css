@@ -1893,6 +1893,17 @@ input[type="color"] {
   color: var(--accent);
 }
 
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.setting-label {
+  min-width: 56px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+}
 .segmented {
   display: inline-flex;
   padding: 3px;
@@ -2758,6 +2769,133 @@ body::after {
   }
   .empty-state {
     padding: 12px;
+  }
+}
+
+/* ==========================================================================
+   Glass cards (Settings → Appearance → Cards). Frosted, translucent surfaces
+   that blur the moving light behind them. Blur only on the big containers;
+   things inside them get a light tint, never a second blur.
+   ========================================================================== */
+:root[data-cards="glass"] {
+  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.36));
+  --glass-edge: rgba(255, 255, 255, 0.75);
+  --glass-rim: rgba(120, 100, 70, 0.12);
+  --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  --glass-lift: 0 18px 40px -22px rgba(70, 50, 20, 0.28), 0 2px 6px -2px rgba(70, 50, 20, 0.08);
+  --glass-blur: blur(22px) saturate(165%);
+  --glass-tint: rgba(255, 255, 255, 0.45);
+  --glass-tint-hover: rgba(255, 255, 255, 0.7);
+}
+:root[data-cards="glass"][data-theme="dark"] {
+  --glass-bg: linear-gradient(145deg, rgba(40, 52, 80, 0.55), rgba(18, 26, 43, 0.42));
+  --glass-edge: rgba(255, 255, 255, 0.1);
+  --glass-rim: rgba(0, 0, 0, 0.35);
+  --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --glass-lift: 0 20px 44px -20px rgba(0, 0, 0, 0.6);
+  --glass-blur: blur(24px) saturate(150%);
+  --glass-tint: rgba(255, 255, 255, 0.035);
+  --glass-tint-hover: rgba(255, 255, 255, 0.07);
+}
+
+/* Give the light a bit more colour so there is something to see through. */
+:root[data-cards="glass"] body::before,
+:root[data-cards="glass"] body::after {
+  filter: saturate(1.35);
+}
+:root[data-cards="glass"]:not([data-theme="dark"]) body::before {
+  opacity: 1;
+}
+
+:root[data-cards="glass"] :is(.panel, .hours, .goal-list, .category-list, .specimen, .modal) {
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--glass-rim),
+    var(--glass-lift);
+}
+:root[data-cards="glass"] .specimen.is-active {
+  border-color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px var(--ink),
+    var(--glass-lift);
+}
+:root[data-cards="glass"] .modal {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 86%, transparent), color-mix(in srgb, var(--surface) 70%, transparent));
+}
+:root[data-cards="glass"] .modal-backdrop {
+  background: rgba(9, 14, 26, 0.3);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+/* Inside the glass: tints, not more blur. */
+:root[data-cards="glass"] .hour.logged {
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+}
+:root[data-cards="glass"] .hour.current {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+:root[data-cards="glass"] .hour.editing {
+  background: var(--glass-tint);
+}
+:root[data-cards="glass"] .hour.empty .hour-body:hover,
+:root[data-cards="glass"] .recent-day:hover,
+:root[data-cards="glass"] .score-col:hover {
+  background: var(--glass-tint);
+}
+:root[data-cards="glass"] .period {
+  background: color-mix(in srgb, var(--p-bg, var(--surface-2)) 70%, transparent);
+}
+:root[data-cards="glass"] .cal-day {
+  border-color: var(--glass-edge);
+  background: var(--glass-tint);
+}
+:root[data-cards="glass"] .cal-day:hover {
+  background: var(--glass-tint-hover);
+  border-color: var(--ink-3);
+}
+:root[data-cards="glass"] .cal-day.is-future {
+  background: transparent;
+  border-color: var(--rule-strong);
+}
+:root[data-cards="glass"] .cal-day.is-selected {
+  border-color: var(--ink);
+}
+:root[data-cards="glass"] .segmented {
+  border-color: var(--glass-edge);
+  background: var(--glass-tint);
+  box-shadow: 0 0 0 1px var(--glass-rim);
+}
+:root[data-cards="glass"] .btn:not(.btn-primary):not(.btn-ghost):not(.btn-danger) {
+  border-color: var(--glass-edge);
+  background: var(--glass-tint-hover);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--glass-rim),
+    0 2px 4px -2px rgba(70, 50, 20, 0.15);
+}
+:root[data-cards="glass"] .btn:not(.btn-primary):not(.btn-ghost):not(.btn-danger):hover {
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+:root[data-cards="glass"] .hbar,
+:root[data-cards="glass"] .goal-bar,
+:root[data-cards="glass"] .goal-days span::before {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+:root[data-cards="glass"] .heat-cell:not([class*="is-"]) {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+@media (max-width: 760px) {
+  :root[data-cards="glass"] .tabbar {
+    border-top-color: var(--glass-edge);
+    background: color-mix(in srgb, var(--surface) 62%, transparent);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
   }
 }
 

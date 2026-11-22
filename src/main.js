@@ -51,7 +51,8 @@ const defaultSettings = {
   reminder: false,
   reminderMinutes: 60,
   weekStartsMonday: true,
-  theme: "system",
+  theme: "light",
+  cardStyle: "glass",
   displayFont: "lobster-two",
 };
 
@@ -97,7 +98,7 @@ function normalizeState(parsed) {
       ? saved.darkMode
         ? "dark"
         : "light"
-      : "system";
+      : "light";
   const { darkMode, ...rest } = saved;
   const next = {
     ...structuredClone(defaultState),
@@ -112,6 +113,7 @@ function normalizeState(parsed) {
       ...defaultSettings,
       ...rest,
       theme,
+      cardStyle: rest.cardStyle === "solid" ? "solid" : "glass",
       reminderMinutes: Number(rest.reminderMinutes) || 60,
       displayFont: migrateFont(saved.displayFont),
     },
@@ -392,6 +394,7 @@ function applyAppearance() {
   document.documentElement.dataset.theme = theme;
   document.documentElement.dataset.font = state.settings.displayFont;
   document.documentElement.dataset.daypart = daypart();
+  document.documentElement.dataset.cards = state.settings.cardStyle;
   loadDisplayFont(state.settings.displayFont);
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = theme === "dark" ? "#0c1220" : "#f7f3ea";
@@ -1055,6 +1058,16 @@ function goalRow(goal) {
 }
 
 /* ----------------------------- Settings ---------------------------------- */
+function segmented(label, key, options) {
+  const current = state.settings[key];
+  return `<div class="setting-row"><span class="setting-label">${label}</span><div class="segmented" role="radiogroup" aria-label="${label}">${options
+    .map(
+      ([value, text]) =>
+        `<label><input type="radio" name="${key}" value="${value}" data-setting="${key}" ${current === value ? "checked" : ""} /><span>${text}</span></label>`,
+    )
+    .join("")}</div></div>`;
+}
+
 function settingsPage() {
   Object.keys(DISPLAY_FONTS).forEach(loadDisplayFont);
   const s = state.settings;
@@ -1083,20 +1096,17 @@ function settingsPage() {
     </section>
 
     <section class="setting-group">
-      <div class="setting-intro"><h2>Appearance</h2><p>System follows your device's light or dark setting.</p></div>
+      <div class="setting-intro"><h2>Appearance</h2><p>System follows your device's light or dark setting. Glass cards let the moving light show through.</p></div>
       <div class="setting-body">
-        <div class="segmented" role="radiogroup" aria-label="Theme">
-          ${[
-            ["system", "System"],
-            ["light", "Light"],
-            ["dark", "Dark"],
-          ]
-            .map(
-              ([value, label]) =>
-                `<label><input type="radio" name="theme" value="${value}" data-setting="theme" ${s.theme === value ? "checked" : ""} /><span>${label}</span></label>`,
-            )
-            .join("")}
-        </div>
+        ${segmented("Theme", "theme", [
+          ["system", "System"],
+          ["light", "Light"],
+          ["dark", "Dark"],
+        ])}
+        ${segmented("Cards", "cardStyle", [
+          ["solid", "Solid"],
+          ["glass", "Glass"],
+        ])}
       </div>
     </section>
 

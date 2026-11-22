@@ -28,12 +28,13 @@
         try {
           s = (JSON.parse(localStorage.getItem("the24log:v1")) || {}).settings || {};
         } catch (e) {}
-        var theme = s.theme || (s.darkMode === true ? "dark" : s.darkMode === false ? "light" : "system");
+        var theme = s.theme || (s.darkMode === true ? "dark" : "light");
         if (theme === "system") theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         var font = fonts[s.displayFont] ? s.displayFont : "lobster-two";
         var root = document.documentElement;
         root.dataset.theme = theme;
         root.dataset.font = font;
+        root.dataset.cards = s.cardStyle === "solid" ? "solid" : "glass";
         var h = new Date().getHours();
         root.dataset.daypart = h < 6 ? "night" : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
         document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#0c1220" : "#f7f3ea";
@@ -52,12 +53,12 @@
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&display=swap"
     />
 
-    <link rel="stylesheet" href="/src/style.css?v=1007" />
+    <link rel="stylesheet" href="/src/style.css?v=1008" />
     <title>The 24 Log</title>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js?v=1007"></script>
+    <script type="module" src="/src/main.js?v=1008"></script>
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
