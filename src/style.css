@@ -2211,6 +2211,222 @@ input[type="color"] {
   color: var(--ink-2);
 }
 
+/* Bell, reminder bar, notifications ---------------------------------------- */
+.bell {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: var(--ink-2);
+  transition:
+    color 0.12s,
+    background-color 0.12s;
+}
+.bell:hover {
+  color: var(--ink);
+  background: var(--surface-3);
+}
+.bell:focus-visible {
+  box-shadow: var(--focus);
+}
+.bell .icon {
+  width: 19px;
+  height: 19px;
+  transform-origin: 50% 3px;
+}
+.bell.has-unread .icon {
+  animation: bell-ring 0.9s ease 0.4s 1;
+}
+.bell-count {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: var(--tone-low);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.brand .bell {
+  margin-left: auto;
+  color: var(--navy-ink-2);
+}
+.brand .bell:hover {
+  color: var(--navy-ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+.brand .bell-count {
+  box-shadow: 0 0 0 2px var(--navy);
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+@keyframes bell-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  15% {
+    transform: rotate(14deg);
+  }
+  35% {
+    transform: rotate(-11deg);
+  }
+  55% {
+    transform: rotate(7deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
+}
+
+.nudge {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: calc(var(--s-4) * -1) 0 var(--s-6);
+  padding: 8px 8px 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--rule));
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  animation: rise-in 0.25s ease-out;
+}
+.nudge p {
+  flex: 1;
+  min-width: 0;
+}
+.nudge b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink);
+}
+.nudge-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--surface);
+}
+.nudge-icon .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.notice-list {
+  display: grid;
+}
+.notice {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+}
+.notice:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+.notice-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--ink-2);
+  background: var(--surface-3);
+}
+.notice-icon .icon {
+  width: 16px;
+  height: 16px;
+}
+.notice.is-new .notice-icon {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.notice.is-new .notice-icon::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tone-low);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.notice-text b {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+.notice-text p {
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+.permission-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  max-width: 460px;
+  padding: 10px 10px 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+}
+.permission {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+.permission i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+.permission.is-granted i {
+  background: var(--tone-good);
+}
+.permission.is-denied i {
+  background: var(--tone-low);
+}
+.permission.is-unsupported i {
+  background: var(--rule-strong);
+}
+#reminders .fine-print {
+  max-width: 460px;
+  line-height: 1.5;
+}
+
 /* Toast ------------------------------------------------------------------- */
 .toast {
   position: fixed;

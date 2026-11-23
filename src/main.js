@@ -79,6 +79,7 @@ const defaultState = {
   ],
   reflections: {},
   settings: defaultSettings,
+  seenNotices: [],
 };
 
 function migrateFont(value) {
@@ -109,6 +110,7 @@ function normalizeState(parsed) {
     goals: Array.isArray(parsed.goals) ? parsed.goals : structuredClone(defaultState.goals),
     entries: parsed.entries && typeof parsed.entries === "object" ? parsed.entries : {},
     reflections: parsed.reflections && typeof parsed.reflections === "object" ? parsed.reflections : {},
+    seenNotices: Array.isArray(parsed.seenNotices) ? parsed.seenNotices.slice(-80) : [],
     settings: {
       ...defaultSettings,
       ...rest,
@@ -148,6 +150,9 @@ let pageEntering = false;
 let lastSaved = null; // { date, hours, at } — drives the little pop on save
 let toastTimer = null;
 let noteSaveTimer = null;
+const QUIET_UNTIL = 7; // no reminders for blocks that end before 07:00
+let pendingNudge = null; // { date, start, end } — the in-app "this hour is empty" bar
+const REMINDER_SENT_KEY = "the24log:last-reminder";
 const pageScrollPositions = {};
 
 const app = document.querySelector("#app");
@@ -367,6 +372,9 @@ const ICONS = {
   sunrise: '<path d="M4 18h16M7 14a5 5 0 0 1 10 0M12 4v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M2 14h2m16 0h2"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   sunset: '<path d="M4 18h16M7 14a5 5 0 0 1 10 0M12 9V4m0 5-2-2m2 2 2-2M2 14h2m16 0h2"/>',
+  bell: '<path d="M18 16v-5a6 6 0 0 0-12 0v5l-1.5 2h15Z"/><path d="M10 21a2 2 0 0 0 4 0"/>',
+  note: '<path d="M5 4h14v11l-5 5H5Z"/><path d="M14 20v-5h5M8 9h8m-8 4h4"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   flame: '<path d="M12 21c4 0 6.5-2.6 6.5-6.2 0-3.4-2.3-5.3-3.6-7.8-.6 1.6-1.6 2.6-2.6 3C12.7 7 11.6 4.5 9.5 3c.2 3-1.6 4.8-3 6.6A7.4 7.4 0 0 0 5.5 14.8C5.5 18.4 8 21 12 21Z"/>',
 };
 function icon(name) {
@@ -459,9 +467,12 @@ function render() {
       <div class="main">
         <header class="topbar">
           <span class="wordmark">THE <b>24</b> LOG</span>
-          <button class="btn btn-primary btn-sm" data-action="open-quick-log">${icon("plus")}<span>Log</span></button>
+          <div class="topbar-actions">
+            ${bellButton()}
+            <button class="btn btn-primary btn-sm" data-action="open-quick-log">${icon("plus")}<span>Log</span></button>
+          </div>
         </header>
-        <main class="content" id="content">${pages[activePage]()}</main>
+        <main class="content" id="content">${nudgeBar()}${pages[activePage]()}</main>
       </div>
       ${tabbar()}
     </div>
@@ -476,7 +487,7 @@ function render() {
 function sidebar() {
   const streak = getStreak();
   return `<aside class="sidebar">
-    <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /><span class="wordmark">THE <b>24</b> LOG</span></div>
+    <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /><span class="wordmark">THE <b>24</b> LOG</span>${bellButton()}</div>
     <button class="log-button" data-action="open-quick-log">${icon("plus")}<span>Log an hour</span><kbd>N</kbd></button>
     <nav aria-label="Main">${PAGES.map(
       ([page, label]) =>
@@ -505,6 +516,118 @@ function pageHead({ kicker = "", title, sub = "", actions = "" }) {
     </div>
     ${actions ? `<div class="page-actions">${actions}</div>` : ""}
   </header>`;
+}
+
+/* ----------------------------- Notifications ----------------------------- */
+// Everything the bell lists is worked out from the data each time; only the
+// ids you've already seen are stored, so the count clears when you look.
+function notices() {
+  const today = todayString();
+  const hour = new Date().getHours();
+  const list = [];
+  const quiet = hour < QUIET_UNTIL;
+
+  const endedEmpty = !quiet && hour > 0 && !entryFor(today, hour - 1);
+  if (endedEmpty) {
+    list.push({
+      id: `ended-${today}-${hour - 1}`,
+      icon: "clock",
+      title: `${formatHour(hour - 1)}–${formatHour(hour)} is still empty`,
+      body: "That hour just ended. Log it while you remember.",
+      action: `data-action="log-gap" data-hour="${hour - 1}" data-end="${hour}"`,
+      actionText: "Log it",
+    });
+  }
+
+  const openHours = unloggedGaps(today)
+    .reduce((sum, [a, b]) => sum + (b - a), 0) - (endedEmpty ? 1 : 0);
+  if (openHours > 0) {
+    list.push({
+      id: `gaps-${today}-${openHours}`,
+      icon: "today",
+      title: `${plural(openHours, endedEmpty ? "more open hour" : "open hour")} today`,
+      body: "Earlier hours with no entry yet.",
+      action: 'data-action="open-gaps"',
+      actionText: "See them",
+    });
+  }
+
+  const yesterday = shiftDate(today, -1);
+  if (state.reflections[yesterday]) {
+    list.push({
+      id: `note-${yesterday}`,
+      icon: "note",
+      title: "Your note from yesterday",
+      body: `“${escapeHtml(state.reflections[yesterday])}”`,
+    });
+  }
+
+  if (hour >= 20 && !state.reflections[today]) {
+    list.push({
+      id: `write-note-${today}`,
+      icon: "note",
+      title: "Leave a note for tomorrow",
+      body: "One line on what to keep or change. It shows at the top of tomorrow.",
+      action: 'data-action="go-note"',
+      actionText: "Write it",
+    });
+  }
+
+  const streak = getStreak();
+  const loggedToday = loggedCount(today);
+  if (streak >= 2 && loggedToday < 18) {
+    list.push({
+      id: `streak-${today}-${streak}`,
+      icon: "flame",
+      title: `${streak} days in a row`,
+      body: `Log ${plural(18 - loggedToday, "more hour")} today to make it ${streak + 1}.`,
+    });
+  }
+
+  if (!state.settings.reminder) {
+    list.push({
+      id: "reminders-off",
+      icon: "bell",
+      title: "Reminders are off",
+      body: "Turn them on to get a nudge when an hour ends with nothing logged.",
+      action: 'data-action="go-reminders"',
+      actionText: "Settings",
+    });
+  } else if (notificationPermission() === "denied") {
+    list.push({
+      id: "reminders-blocked",
+      icon: "bell",
+      title: "Notifications are blocked",
+      body: "Reminders can only show inside the app until you allow notifications for this site.",
+      action: 'data-action="go-reminders"',
+      actionText: "How to fix",
+    });
+  }
+  return list;
+}
+
+function bellButton() {
+  const seen = new Set(state.seenNotices);
+  const unread = notices().filter((n) => !seen.has(n.id)).length;
+  const label = unread ? `Notifications, ${unread} new` : "Notifications";
+  return `<button type="button" class="bell ${unread ? "has-unread" : ""}" data-action="open-notices" aria-label="${label}" title="Notifications">${icon("bell")}${unread ? `<span class="bell-count">${unread > 9 ? "9+" : unread}</span>` : ""}</button>`;
+}
+
+// The in-app version of a reminder, for when the page is open in front of you.
+function nudgeBar() {
+  if (!pendingNudge) return "";
+  const { date, start, end } = pendingNudge;
+  const stillEmpty = date === todayString() && rangeOfHours(start, end).some((h) => !entryFor(date, h));
+  if (!stillEmpty) {
+    pendingNudge = null;
+    return "";
+  }
+  return `<div class="nudge" role="status">
+    <span class="nudge-icon">${icon("clock")}</span>
+    <p><b>${formatHour(start)}–${formatHour(end)}</b> ${end - start === 1 ? "has no entry yet." : "has no entries yet."}</p>
+    <button type="button" class="btn btn-primary btn-sm" data-action="nudge-log">Log it</button>
+    <button type="button" class="btn btn-ghost btn-icon btn-sm" data-action="nudge-dismiss" aria-label="Dismiss">${icon("x")}</button>
+  </div>`;
 }
 
 /* The 24-segment strip: the app's one recurring picture of a day. */
@@ -1071,6 +1194,7 @@ function segmented(label, key, options) {
 function settingsPage() {
   Object.keys(DISPLAY_FONTS).forEach(loadDisplayFont);
   const s = state.settings;
+  const permission = notificationPermission();
   const allDates = Object.keys(state.entries);
   const usage = hoursByCategory(allDates);
   const sample = dateLabel(todayString());
@@ -1135,10 +1259,10 @@ function settingsPage() {
       </div>
     </section>
 
-    <section class="setting-group">
-      <div class="setting-intro"><h2>Reminders</h2><p>A browser notification at the top of the hour if the hour that just ended is empty. Works while the app is open in a tab or installed.</p></div>
+    <section class="setting-group" id="reminders">
+      <div class="setting-intro"><h2>Reminders</h2><p>When an hour ends with nothing logged, you get a notification. If the app is already in front of you, a bar appears at the top of the page instead.</p></div>
       <div class="setting-body">
-        <label class="toggle-row"><span><b>Remind me to log</b><small>${s.reminder ? "On" : "Off"}${"Notification" in window && Notification.permission === "denied" ? " · notifications are blocked for this site" : ""}</small></span><span class="switch"><input type="checkbox" data-setting="reminder" ${s.reminder ? "checked" : ""} /><i></i></span></label>
+        <label class="toggle-row"><span><b>Remind me to log</b><small>${s.reminder ? (permission === "granted" ? "On" : "On · inside the app only") : "Off"}</small></span><span class="switch"><input type="checkbox" data-setting="reminder" ${s.reminder ? "checked" : ""} /><i></i></span></label>
         <label class="field-inline">Check
           <select data-setting="reminderMinutes" ${s.reminder ? "" : "disabled"}>
             <option value="60" ${s.reminderMinutes === 60 ? "selected" : ""}>every hour</option>
@@ -1146,6 +1270,23 @@ function settingsPage() {
             <option value="180" ${s.reminderMinutes === 180 ? "selected" : ""}>every 3 hours</option>
           </select>
         </label>
+        <div class="permission-row">
+          <p class="permission is-${permission}"><i></i>${
+            {
+              granted: "Notifications are allowed in this browser",
+              denied: "Notifications are blocked for this site",
+              default: "This browser hasn't been asked yet",
+              unsupported: "This browser can't show notifications",
+            }[permission]
+          }</p>
+          ${permission === "unsupported" ? "" : `<button class="btn btn-sm" data-action="test-reminder">${icon("bell")}<span>Send a test</span></button>`}
+        </div>
+        ${
+          permission === "denied"
+            ? '<p class="fine-print">To allow them, click the icon at the left of the address bar, set Notifications to Allow, then reload.</p>'
+            : ""
+        }
+        <p class="fine-print">Reminders only run while The 24 Log is open, in a tab or as an installed app. Closing it, or the browser putting an unused tab to sleep, pauses them; anything missed shows at the top of the page when you come back. Nothing is sent between midnight and ${formatHour(QUIET_UNTIL)}. If a test doesn't appear, check your system's notification settings and Do Not Disturb.</p>
       </div>
     </section>
 
@@ -1190,6 +1331,7 @@ function modal() {
     gaps: gapsModal,
     shortcuts: shortcutsModal,
     score: scoreModal,
+    notices: noticesModal,
   };
   return views[activeModal.type]?.() || "";
 }
@@ -1318,6 +1460,25 @@ function gapsModal() {
           )
           .join("")}</ul><p class="fine-print">Logging a range fills every hour in it with the same entry. You can edit single hours afterwards.</p>`
       : '<p class="modal-copy">Every hour so far today has an entry.</p>',
+  );
+}
+
+function noticesModal() {
+  const list = notices();
+  const seenBefore = new Set(activeModal.seen || []);
+  return modalShell(
+    "Notifications",
+    list.length
+      ? `<ul class="notice-list">${list
+          .map(
+            (n) => `<li class="notice ${seenBefore.has(n.id) ? "" : "is-new"}">
+              <span class="notice-icon">${icon(n.icon)}</span>
+              <div class="notice-text"><b>${n.title}</b>${n.body ? `<p>${n.body}</p>` : ""}</div>
+              ${n.action ? `<button type="button" class="btn btn-sm" ${n.action}>${n.actionText}</button>` : ""}
+            </li>`,
+          )
+          .join("")}</ul>`
+      : '<p class="modal-copy">Nothing waiting. Every hour so far today has an entry.</p>',
   );
 }
 
@@ -1454,32 +1615,77 @@ function msUntilNextTopOfHour() {
   return next - now;
 }
 
-async function onHourEndCheck() {
-  const now = new Date();
-  const nowHour = now.getHours();
+function notificationPermission() {
+  return "Notification" in window ? Notification.permission : "unsupported";
+}
+
+// The block the most recent check covers, if any of it is still empty.
+// With "every 2 hours", the 14:00 check looks at 12:00–14:00, and so on.
+function reminderSlot(now = new Date()) {
   const every = Math.max(1, Math.round(state.settings.reminderMinutes / 60));
-  if (nowHour % every !== 0) return;
-  const endedHour = (nowHour - 1 + 24) % 24;
-  const date = nowHour === 0 ? shiftDate(todayString(), -1) : todayString();
-  const missing = rangeOfHours(0, every)
-    .map((i) => (endedHour - i + 24) % 24)
-    .filter((h) => !entryFor(date, h));
-  if (!missing.length || !("Notification" in window) || Notification.permission !== "granted") return;
-  if (!document.hidden) {
-    render();
-    return;
-  }
-  const body =
-    missing.length === 1
-      ? `${formatHour(endedHour)}–${formatHour(nowHour)} has no entry yet.`
-      : `${plural(missing.length, "hour")} before ${formatHour(nowHour)} have no entry yet.`;
+  const hour = now.getHours();
+  const boundary = hour - (hour % every);
+  if (boundary < QUIET_UNTIL) return null;
+  const date = todayString();
+  const missing = rangeOfHours(boundary - every, boundary).filter((h) => !entryFor(date, h));
+  if (!missing.length) return null;
+  return { key: `${date}@${boundary}`, date, start: missing[0], end: missing[missing.length - 1] + 1 };
+}
+
+async function notify(body, data) {
+  const options = { body, icon: "/icon.svg", badge: "/icon.svg", tag: "hour-reminder", renotify: true, data };
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
-    if (reg) reg.showNotification("The 24 Log", { body, icon: "/icon.svg", tag: "hour-reminder" });
-    else new Notification("The 24 Log", { body, icon: "/icon.svg", tag: "hour-reminder" });
+    if (reg) {
+      await reg.showNotification("The 24 Log", options);
+      return true;
+    }
   } catch {
-    /* notifications unavailable */
+    /* fall through to the page-level API */
   }
+  try {
+    const n = new Notification("The 24 Log", options);
+    n.onclick = () => {
+      window.focus();
+      openReminderLog(data);
+      n.close();
+    };
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function refreshBells() {
+  app.querySelectorAll(".bell").forEach((el) => (el.outerHTML = bellButton()));
+}
+
+function showNudge(slot) {
+  pendingNudge = { date: slot.date, start: slot.start, end: slot.end };
+  const content = app.querySelector(".content");
+  if (!content) return;
+  // Slot it in without a full re-render, so nothing you're typing is lost.
+  content.querySelector(".nudge")?.remove();
+  content.insertAdjacentHTML("afterbegin", nudgeBar());
+  refreshBells();
+}
+
+// Runs at the top of each hour, when the tab comes back into view, and on load,
+// so a check that was missed while the tab slept still happens.
+async function checkReminder() {
+  if (!state.settings.reminder) return;
+  const slot = reminderSlot();
+  if (!slot) return;
+  try {
+    if (localStorage.getItem(REMINDER_SENT_KEY) === slot.key) return;
+    localStorage.setItem(REMINDER_SENT_KEY, slot.key);
+  } catch {
+    /* storage unavailable: worst case a reminder repeats */
+  }
+  showNudge(slot);
+  if (document.visibilityState === "visible" || notificationPermission() !== "granted") return;
+  const range = `${formatHour(slot.start)}–${formatHour(slot.end)}`;
+  await notify(`${range} ${slot.end - slot.start === 1 ? "has no entry yet." : "has no entries yet."} Click to log it.`, slot);
 }
 
 function startReminder() {
@@ -1487,11 +1693,56 @@ function startReminder() {
   if (!state.settings.reminder) return;
   const schedule = () => {
     reminderTimer = setTimeout(() => {
-      onHourEndCheck();
+      checkReminder();
       schedule();
     }, msUntilNextTopOfHour());
   };
   schedule();
+}
+
+async function sendTestReminder() {
+  if (notificationPermission() === "default") await Notification.requestPermission();
+  const permission = notificationPermission();
+  if (permission !== "granted") {
+    render();
+    return showToast(
+      permission === "denied" ? "Notifications are blocked for this site" : "This browser can't show notifications",
+    );
+  }
+  const date = todayString();
+  const start = defaultQuickHour(date);
+  const sent = await notify("This is what a reminder looks like. Click it to log an hour.", {
+    date,
+    start,
+    end: start + 1,
+  });
+  render();
+  showToast(sent ? "Test sent. Nothing showed up? Check Do Not Disturb" : "The browser refused to show it");
+}
+
+function openReminderLog(slot = {}) {
+  pendingNudge = null;
+  const date = slot.date || todayString();
+  selectedDate = date;
+  editHour = null;
+  if (activePage !== "today") navigateToPage("today", { resetScroll: true, force: true });
+  openModal("quick-log", {
+    date,
+    hour: Number.isInteger(slot.start) ? slot.start : undefined,
+    end: Number.isInteger(slot.end) ? slot.end : undefined,
+  });
+}
+
+// Leave a modal for a page without leaving a stray history entry behind.
+function leaveModalTo(page) {
+  const fromModal = Boolean(history.state?.modal);
+  if (activePage === page) {
+    activeModal = null;
+    render();
+    if (fromModal) history.back();
+  } else {
+    navigateToPage(page, { replace: fromModal, resetScroll: true, force: true });
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -1576,6 +1827,33 @@ app.addEventListener("click", (event) => {
       });
     case "open-gaps":
       return openModal("gaps");
+    case "open-notices": {
+      const seen = [...state.seenNotices];
+      const ids = notices().map((n) => n.id);
+      state.seenNotices = [...new Set([...seen.filter((id) => ids.includes(id)), ...ids])];
+      saveState();
+      return openModal("notices", { seen });
+    }
+    case "nudge-log":
+      return openReminderLog(pendingNudge || {});
+    case "nudge-dismiss":
+      pendingNudge = null;
+      target.closest(".nudge")?.remove();
+      return;
+    case "go-note":
+      selectedDate = todayString();
+      editHour = null;
+      leaveModalTo("today");
+      return requestAnimationFrame(() => {
+        const note = document.getElementById("reflection-section");
+        note?.scrollIntoView({ block: "center" });
+        note?.querySelector("textarea")?.focus({ preventScroll: true });
+      });
+    case "go-reminders":
+      leaveModalTo("settings");
+      return requestAnimationFrame(() => document.getElementById("reminders")?.scrollIntoView({ block: "start" }));
+    case "test-reminder":
+      return sendTestReminder();
     case "open-shortcuts":
       return openModal("shortcuts");
     case "explain-score":
@@ -1813,11 +2091,10 @@ app.addEventListener("change", async (event) => {
   if (input.dataset.setting) {
     const key = input.dataset.setting;
     if (key === "reminder") {
-      if (input.checked && "Notification" in window && Notification.permission === "default")
-        await Notification.requestPermission();
-      const allowed = "Notification" in window && Notification.permission === "granted";
-      state.settings.reminder = input.checked && allowed;
-      if (input.checked && !allowed) showToast("Notifications are blocked for this site, so reminders can't be sent");
+      if (input.checked && notificationPermission() === "default") await Notification.requestPermission();
+      state.settings.reminder = input.checked;
+      if (input.checked && notificationPermission() !== "granted")
+        showToast("Notifications are blocked, so reminders will only show inside the app");
     } else if (input.type === "checkbox") {
       state.settings[key] = input.checked;
     } else if (key === "reminderMinutes") {
@@ -1904,15 +2181,44 @@ window.addEventListener("beforeinstallprompt", (event) => {
 });
 
 // Re-render at the top of each hour so "now" moves and gaps update.
+let renderedHour = new Date().getHours();
+function safeToRerender() {
+  return !activeModal && editHour === null && !document.activeElement?.matches?.("textarea, input, select");
+}
 function scheduleHourTick() {
   setTimeout(() => {
-    if (!activeModal && editHour === null && !document.activeElement?.matches?.("textarea, input")) render();
+    renderedHour = new Date().getHours();
+    if (safeToRerender()) render();
     scheduleHourTick();
   }, msUntilNextTopOfHour());
 }
 
+// Timers stall while a tab sleeps or the computer is suspended. Catch up when it wakes.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  const hour = new Date().getHours();
+  if (hour !== renderedHour && safeToRerender()) {
+    renderedHour = hour;
+    render();
+  }
+  checkReminder();
+});
+
+// A click on a reminder notification, relayed by the service worker.
+navigator.serviceWorker?.addEventListener("message", (event) => {
+  if (event.data?.type === "log-reminder") openReminderLog(event.data);
+});
+
 activePage = getPageFromHash();
-history.replaceState({ page: activePage }, "", `#${activePage}`);
+const launchParams = new URLSearchParams(window.location.search);
+history.replaceState({ page: activePage }, "", `${window.location.pathname}#${activePage}`);
 startReminder();
 scheduleHourTick();
 render();
+if (launchParams.has("log")) {
+  // Opened from a reminder while no window was open.
+  const [start, end] = launchParams.get("log").split("-").map(Number);
+  openReminderLog({ date: launchParams.get("date") || todayString(), start, end });
+} else {
+  checkReminder();
+}

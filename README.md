@@ -27,7 +27,9 @@ To stop the server, press `Ctrl+C` in the terminal.
 - Daily and weekly goals (at least / at most) that can be edited
 - Light, dark, or follow-the-system theme, and a choice of heading typeface
 - Keyboard shortcuts: `N` log, `T` today, `←` `→` change day, `1`–`5` pages, `?` list
-- Browser reminders, JSON backup and restore, CSV export, installable as an app
+- Notifications bell: the hour that just ended, other open hours, yesterday's note, streak and reminder status
+- Reminders when an hour ends empty: a system notification in the background, a bar on the page when it's in front of you, with catch-up after the tab sleeps and a test button (they run only while the app is open; quiet from midnight to 07:00)
+- JSON backup and restore, CSV export, installable as an app
 
 ## Your data
 

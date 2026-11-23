@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-24-log-v51';
+const CACHE_NAME = 'the-24-log-v52';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -58,4 +58,24 @@ self.addEventListener('fetch', (event) => {
       return cachedResponse || fetchPromise;
     })
   );
+});
+
+// Reminder clicked: bring the app forward and open the log form for that block.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
+    if (open) {
+      await open.focus();
+      open.postMessage({ type: 'log-reminder', ...data });
+      return;
+    }
+    const params = new URLSearchParams();
+    if (Number.isInteger(data.start)) params.set('log', `${data.start}-${data.end}`);
+    if (data.date) params.set('date', data.date);
+    const query = params.toString();
+    await self.clients.openWindow(`/${query ? `?${query}` : ''}#today`);
+  })());
 });
